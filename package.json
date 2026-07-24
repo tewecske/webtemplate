@@ -1,0 +1,12 @@
+{
+  "name": "webtemplate",
+  "private": true,
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  },
+  "scripts": {
+    "predev": "sbt --client 'root/compile'",
+    "dev": "concurrently -n cask,zio,scalajs,vite -c blue,green,magenta,yellow \"sbt --client '~backendCask/reStart'\" \"sbt --client '~backendZio/reStart'\" \"sbt --client '~frontend/fastLinkJS'\" \"npm --prefix web run dev\"",
+    "dev:tmux": "bash dev-tmux.sh"
+  }
+}
