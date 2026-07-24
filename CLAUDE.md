@@ -56,6 +56,26 @@ explicitly — without that, sbt-revolver's forked process working directory def
 submodule's own directory, and the SQLite paths (`data/*.sqlite`, relative) end up in the
 wrong place.
 
+### Config (host/port/sqlite path)
+
+Both backends load a `webtemplate.shared.config.AppConfig(host, port, sqlitePath)` case class
+(`modules/shared/jvm/.../config/AppConfig.scala`) via PureConfig, reading HOCON under the `app`
+namespace. `AppConfig.load()` just calls `ConfigSource.default.at("app").loadOrThrow[AppConfig]`
+— environment selection is Typesafe Config's own built-in mechanism, not custom code.
+
+Each backend module has its own `src/main/resources/application*.conf` (field names are
+kebab-case in HOCON, e.g. `sqlite-path` → `sqlitePath`):
+- `application.conf` — dev, loaded by default with zero flags (matches `npm run dev`'s ports).
+- `application-test.conf` — separate port/sqlite file so a test run never touches dev data.
+- `application-prod.conf` — illustrative values with `${?APP_HOST}` / `${?APP_PORT}` /
+  `${?APP_SQLITE_PATH}` env-var overrides for deploy-time configuration.
+
+Select a non-default file with the JVM system property Typesafe Config already understands:
+`-Dconfig.resource=application-test.conf` (e.g. `java -Dconfig.resource=... -cp ... Main`, or
+`set backendCask/javaOptions += "-Dconfig.resource=..."` before `sbt run` since `reStart`/`run`
+aren't forked by default and won't otherwise see JVM system properties set on the sbt command
+line unless sbt itself is launched with that `-D` flag).
+
 ## Known gotchas (already solved once, don't re-derive)
 
 - If `npm run dev` was killed forcefully rather than via Ctrl+C, sbt's server socket under

@@ -1,12 +1,15 @@
 package webtemplate.backendcask
 
+import webtemplate.shared.config.AppConfig
 import webtemplate.shared.db.SqliteEntryDao
 
 object Main extends cask.Main {
-  override def port: Int = 8080
-  override def host: String = "0.0.0.0"
+  private val config = AppConfig.load()
 
-  private val dao = SqliteEntryDao("data/cask.sqlite")
+  override def port: Int = config.port
+  override def host: String = config.host
+
+  private val dao = SqliteEntryDao(config.sqlitePath)
   private val entryRoutes = new EntryRoutes(new EntryHandlers(dao))
 
   override def allRoutes: Seq[cask.Routes] = Seq(entryRoutes)

@@ -1,9 +1,10 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import org.scalajs.linker.interface.ModuleKind
 
-val scala3Version  = "3.3.8"
-val upickleVersion = "4.4.3"
-val sqliteJdbcVer  = "3.53.2.0"
+val scala3Version   = "3.3.8"
+val upickleVersion  = "4.4.3"
+val sqliteJdbcVer   = "3.53.2.0"
+val pureconfigVer   = "0.17.10"
 
 ThisBuild / scalaVersion := scala3Version
 ThisBuild / organization := "com.example.webtemplate"
@@ -17,7 +18,10 @@ lazy val shared = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies += "com.lihaoyi" %%% "upickle" % upickleVersion
   )
   .jvmSettings(
-    libraryDependencies += "org.xerial" % "sqlite-jdbc" % sqliteJdbcVer
+    libraryDependencies ++= Seq(
+      "org.xerial" % "sqlite-jdbc" % sqliteJdbcVer,
+      "com.github.pureconfig" %% "pureconfig-core" % pureconfigVer
+    )
   )
 
 lazy val sharedJVM = shared.jvm
