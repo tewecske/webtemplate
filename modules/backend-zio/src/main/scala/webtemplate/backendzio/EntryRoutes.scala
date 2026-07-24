@@ -8,6 +8,6 @@ object EntryRoutes {
       Method.GET / "health" -> handler(handlers.health),
       Method.POST / "entries" -> handler((req: Request) => handlers.createEntry(req)),
       Method.GET / "entries" / string("inputId") ->
-        handler((inputId: String, _: Request) => handlers.getHistory(inputId))
+        handler((inputId: String, req: Request) => handlers.getHistory(inputId, req))
     )
 }

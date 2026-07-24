@@ -2,7 +2,14 @@ package webtemplate.shared.config
 
 import pureconfig._
 
-final case class AppConfig(host: String, port: Int, sqlitePath: String) derives ConfigReader
+final case class AuthConfig(
+  sessionCookieName: String,
+  secureCookie: Boolean,
+  googleDevLoginEnabled: Boolean,
+  sessionTtlDays: Int
+) derives ConfigReader
+
+final case class AppConfig(host: String, port: Int, sqlitePath: String, auth: AuthConfig) derives ConfigReader
 
 object AppConfig {
 

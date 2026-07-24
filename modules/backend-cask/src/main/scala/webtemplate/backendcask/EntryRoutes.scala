@@ -9,7 +9,7 @@ class EntryRoutes(handlers: EntryHandlers) extends cask.Routes {
   def createEntry(request: cask.Request): cask.Response[String] = handlers.createEntry(request)
 
   @cask.get("/entries/:inputId")
-  def getHistory(inputId: String): cask.Response[String] = handlers.getHistory(inputId)
+  def getHistory(inputId: String, request: cask.Request): cask.Response[String] = handlers.getHistory(inputId, request)
 
   initialize()
 }

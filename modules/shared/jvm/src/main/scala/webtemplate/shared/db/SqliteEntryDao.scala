@@ -7,26 +7,28 @@ import java.sql.{Connection, DriverManager}
 
 final class SqliteEntryDao private (conn: Connection) extends EntryDao {
 
-  def insert(inputId: String, value: String): Entry = {
+  def insert(userId: Long, inputId: String, value: String): Entry = {
     val createdAt = System.currentTimeMillis()
     val stmt = conn.prepareStatement(
-      "INSERT INTO entries (input_id, value, created_at) VALUES (?, ?, ?)"
+      "INSERT INTO entries (user_id, input_id, value, created_at) VALUES (?, ?, ?, ?)"
     )
     try {
-      stmt.setString(1, inputId)
-      stmt.setString(2, value)
-      stmt.setLong(3, createdAt)
+      stmt.setLong(1, userId)
+      stmt.setString(2, inputId)
+      stmt.setString(3, value)
+      stmt.setLong(4, createdAt)
       stmt.executeUpdate()
     } finally stmt.close()
     Entry(inputId, value, createdAt)
   }
 
-  def history(inputId: String): List[Entry] = {
+  def history(userId: Long, inputId: String): List[Entry] = {
     val stmt = conn.prepareStatement(
-      "SELECT input_id, value, created_at FROM entries WHERE input_id = ? ORDER BY created_at DESC, id DESC"
+      "SELECT input_id, value, created_at FROM entries WHERE user_id = ? AND input_id = ? ORDER BY created_at DESC, id DESC"
     )
     try {
-      stmt.setString(1, inputId)
+      stmt.setLong(1, userId)
+      stmt.setString(2, inputId)
       val rs = stmt.executeQuery()
       try {
         val buf = List.newBuilder[Entry]
@@ -56,13 +58,14 @@ object SqliteEntryDao {
       pragmaStmt.execute(
         """CREATE TABLE IF NOT EXISTS entries (
           |  id INTEGER PRIMARY KEY AUTOINCREMENT,
+          |  user_id INTEGER NOT NULL,
           |  input_id TEXT NOT NULL,
           |  value TEXT NOT NULL,
           |  created_at INTEGER NOT NULL
           |)""".stripMargin
       )
       pragmaStmt.execute(
-        "CREATE INDEX IF NOT EXISTS idx_entries_input_id_created_at ON entries(input_id, created_at DESC)"
+        "CREATE INDEX IF NOT EXISTS idx_entries_user_input_created_at ON entries(user_id, input_id, created_at DESC)"
       )
     } finally pragmaStmt.close()
 

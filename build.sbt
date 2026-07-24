@@ -5,6 +5,7 @@ val scala3Version   = "3.3.8"
 val upickleVersion  = "4.4.3"
 val sqliteJdbcVer   = "3.53.2.0"
 val pureconfigVer   = "0.17.10"
+val jbcryptVer      = "0.4"
 
 ThisBuild / scalaVersion := scala3Version
 ThisBuild / organization := "com.example.webtemplate"
@@ -20,7 +21,8 @@ lazy val shared = crossProject(JSPlatform, JVMPlatform)
   .jvmSettings(
     libraryDependencies ++= Seq(
       "org.xerial" % "sqlite-jdbc" % sqliteJdbcVer,
-      "com.github.pureconfig" %% "pureconfig-core" % pureconfigVer
+      "com.github.pureconfig" %% "pureconfig-core" % pureconfigVer,
+      "org.mindrot" % "jbcrypt" % jbcryptVer
     )
   )
 
