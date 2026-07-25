@@ -53,13 +53,22 @@ lazy val backendZio = project.in(file("modules/backend-zio"))
   )
 
 lazy val frontend = project.in(file("modules/frontend"))
-  .enablePlugins(ScalaJSPlugin)
+  .enablePlugins(ScalaJSPlugin, ScalablyTypedConverterExternalNpmPlugin)
   .dependsOn(sharedJS)
   .settings(
     name := "frontend",
     scalaJSUseMainModuleInitializer := true,
     scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.ESModule)),
-    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.8.0"
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.8.0",
+    // Points at the repo-root npm project (installed via `npm install`) rather than a second
+    // one just for sbt. This also has to be where the actual npm packages consumed from
+    // Scala.js live (not web/'s node_modules): the fastLinkJS output sits under
+    // modules/frontend/target/..., and Vite/esbuild's module resolution walks up from an
+    // importing file's real disk location looking for node_modules — the repo root is an
+    // ancestor of both modules/frontend/target/... and web/, but web/ is only a sibling of
+    // modules/frontend/, so a package installed solely in web/node_modules is unreachable from
+    // the emitted Scala.js bundle.
+    externalNpm := (ThisBuild / baseDirectory).value
   )
 
 lazy val root = project.in(file("."))

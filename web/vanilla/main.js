@@ -1,25 +1,56 @@
+import UniversalRouter from 'universal-router'
+import { mountUserMenu } from './userMenu.js'
+
 const inputIds = ['note-a', 'note-b', 'note-c']
+const contentSectionIds = [
+  'not-admin-section',
+  'not-found-section',
+  'entries-section',
+  'users-list-section',
+  'users-new-section',
+  'users-detail-section',
+]
 
 const backendSelect = document.getElementById('backend-select')
 const authSection = document.getElementById('auth-section')
-const appSection = document.getElementById('app-section')
-const currentUserEmail = document.getElementById('current-user-email')
-const adminNavLink = document.getElementById('admin-nav-link')
+const userMenuEl = document.getElementById('user-menu')
 const loginForm = document.getElementById('login-form')
 const signupForm = document.getElementById('signup-form')
 const googleDevForm = document.getElementById('google-dev-form')
-const logoutBtn = document.getElementById('logout-btn')
 const authTabs = document.querySelectorAll('.auth-tab')
+
+const usersTbody = document.getElementById('users-tbody')
+const usersError = document.getElementById('users-error')
+const createUserForm = document.getElementById('create-user-form')
+const editUserForm = document.getElementById('edit-user-form')
+const deleteUserBtn = document.getElementById('delete-user-btn')
+
+let currentUser = null
+let currentDetailUserId = null
 
 function apiBase() {
   return `/api/${backendSelect.value}`
 }
 
-function container(inputId) {
+function showAuth() {
+  authSection.classList.remove('hidden')
+  userMenuEl.classList.add('hidden')
+  contentSectionIds.forEach((id) => document.getElementById(id).classList.add('hidden'))
+}
+
+function showAuthedSection(id) {
+  authSection.classList.add('hidden')
+  userMenuEl.classList.remove('hidden')
+  contentSectionIds.forEach((sid) => document.getElementById(sid).classList.toggle('hidden', sid !== id))
+}
+
+// --- entries ---
+
+function entryContainer(inputId) {
   return document.querySelector(`[data-input-id="${inputId}"]`)
 }
 
-async function save(inputId, value) {
+async function saveEntry(inputId, value) {
   const res = await fetch(`${apiBase()}/entries`, {
     method: 'POST',
     credentials: 'same-origin',
@@ -36,11 +67,11 @@ async function refreshHistory(inputId) {
     return
   }
   const entries = await res.json()
-  render(inputId, entries)
+  renderEntryHistory(inputId, entries)
 }
 
-function render(inputId, entries) {
-  const list = container(inputId).querySelector('.history-list')
+function renderEntryHistory(inputId, entries) {
+  const list = entryContainer(inputId).querySelector('.history-list')
   list.innerHTML = ''
   for (const entry of entries) {
     const li = document.createElement('li')
@@ -49,41 +80,152 @@ function render(inputId, entries) {
   }
 }
 
-function wireInput(inputId) {
-  const root = container(inputId)
+function wireEntryInput(inputId) {
+  const root = entryContainer(inputId)
   const input = root.querySelector('.entry-input')
   const button = root.querySelector('.save-btn')
-
   button.addEventListener('click', async () => {
     const value = input.value.trim()
     if (!value) return
-    await save(inputId, value)
+    await saveEntry(inputId, value)
     input.value = ''
     await refreshHistory(inputId)
   })
 }
 
-function showAuth() {
-  authSection.classList.remove('hidden')
-  appSection.classList.add('hidden')
-}
+// --- users list ---
 
-function showApp(user) {
-  authSection.classList.add('hidden')
-  appSection.classList.remove('hidden')
-  currentUserEmail.textContent = user.email
-  adminNavLink.classList.toggle('hidden', !user.isAdmin)
-  inputIds.forEach(refreshHistory)
-}
-
-async function checkAuth() {
-  const res = await fetch(`${apiBase()}/auth/me`, { credentials: 'same-origin' })
-  if (res.ok) {
-    showApp(await res.json())
-  } else {
-    showAuth()
+function renderUsers(users) {
+  usersTbody.innerHTML = ''
+  for (const u of users) {
+    const tr = document.createElement('tr')
+    tr.className = 'border-t border-slate-100'
+    tr.innerHTML = `
+      <td class="py-2">${u.email}</td>
+      <td class="py-2">${u.isAdmin ? 'Yes' : 'No'}</td>
+      <td class="py-2">${new Date(u.createdAt).toLocaleDateString()}</td>
+      <td class="py-2 text-right">
+        <a href="#/users/${u.id}" class="text-indigo-600 hover:underline">View / Edit</a>
+      </td>
+    `
+    usersTbody.appendChild(tr)
   }
 }
+
+async function loadUsersList() {
+  usersError.textContent = ''
+  const res = await fetch(`${apiBase()}/admin/users`, { credentials: 'same-origin' })
+  if (res.status === 401) {
+    showAuth()
+    return
+  }
+  if (res.status === 403) {
+    showAuthedSection('not-admin-section')
+    return
+  }
+  if (!res.ok) {
+    usersError.textContent = 'Failed to load users.'
+    return
+  }
+  renderUsers(await res.json())
+}
+
+// --- create user ---
+
+function resetCreateUserForm() {
+  createUserForm.reset()
+  createUserForm.querySelector('.create-user-error').textContent = ''
+}
+
+// --- user detail ---
+
+function fillDetailForm(user) {
+  editUserForm.querySelector('.edit-user-email').value = user.email
+  editUserForm.querySelector('.edit-user-password').value = ''
+  editUserForm.querySelector('.edit-user-is-admin').checked = user.isAdmin
+
+  const isSelf = currentUser != null && user.id === currentUser.id
+  editUserForm.querySelector('.edit-user-self-note').classList.toggle('hidden', !isSelf)
+  deleteUserBtn.classList.toggle('hidden', isSelf)
+  editUserForm.querySelector('.edit-user-is-admin').disabled = isSelf
+}
+
+async function loadUserDetail(id) {
+  currentDetailUserId = id
+  const res = await fetch(`${apiBase()}/admin/users/${id}`, { credentials: 'same-origin' })
+  if (res.status === 401) {
+    showAuth()
+    return
+  }
+  if (res.status === 403) {
+    showAuthedSection('not-admin-section')
+    return
+  }
+  if (res.status === 404 || !res.ok) {
+    showAuthedSection('not-found-section')
+    return
+  }
+  fillDetailForm(await res.json())
+  showAuthedSection('users-detail-section')
+}
+
+// --- router ---
+// Hash-based (not History API): each variant is an independent Vite entry, so path-based
+// routing would need a per-prefix server rewrite rule in both dev and prod. Hash routing needs
+// no server config at all.
+
+const router = new UniversalRouter([
+  {
+    path: '/',
+    action: async () => {
+      showAuthedSection('entries-section')
+      inputIds.forEach(refreshHistory)
+      return true
+    },
+  },
+  {
+    path: '/users',
+    action: async () => {
+      if (!currentUser.isAdmin) {
+        showAuthedSection('not-admin-section')
+        return true
+      }
+      showAuthedSection('users-list-section')
+      await loadUsersList()
+      return true
+    },
+  },
+  {
+    path: '/users/new',
+    action: async () => {
+      if (!currentUser.isAdmin) {
+        showAuthedSection('not-admin-section')
+        return true
+      }
+      resetCreateUserForm()
+      showAuthedSection('users-new-section')
+      return true
+    },
+  },
+  {
+    path: '/users/:id',
+    action: async (context) => {
+      if (!currentUser.isAdmin) {
+        showAuthedSection('not-admin-section')
+        return true
+      }
+      await loadUserDetail(context.params.id)
+      return true
+    },
+  },
+])
+
+function resolveRoute() {
+  const path = location.hash.slice(1) || '/'
+  router.resolve(path).catch(() => showAuthedSection('not-found-section'))
+}
+
+// --- auth ---
 
 function setAuthTab(tab) {
   loginForm.classList.toggle('hidden', tab !== 'login')
@@ -97,6 +239,20 @@ function setAuthTab(tab) {
   })
 }
 
+function afterAuthSuccess() {
+  mountUserMenu(userMenuEl, currentUser, {
+    onManageUsers: () => {
+      location.hash = '#/users'
+    },
+    onLogout: async () => {
+      await fetch(`${apiBase()}/auth/logout`, { method: 'POST', credentials: 'same-origin' })
+      currentUser = null
+      showAuth()
+    },
+  })
+  resolveRoute()
+}
+
 async function submitAuthForm(path, body, errorEl) {
   errorEl.textContent = ''
   const res = await fetch(`${apiBase()}${path}`, {
@@ -106,15 +262,27 @@ async function submitAuthForm(path, body, errorEl) {
     body: JSON.stringify(body),
   })
   if (res.ok) {
-    showApp(await res.json())
+    currentUser = await res.json()
+    afterAuthSuccess()
   } else {
     const err = await res.json().catch(() => ({ error: 'request failed' }))
     errorEl.textContent = err.error || 'request failed'
   }
 }
 
+async function checkAuth() {
+  const res = await fetch(`${apiBase()}/auth/me`, { credentials: 'same-origin' })
+  if (res.ok) {
+    currentUser = await res.json()
+    afterAuthSuccess()
+  } else {
+    currentUser = null
+    showAuth()
+  }
+}
+
 function setup() {
-  inputIds.forEach(wireInput)
+  inputIds.forEach(wireEntryInput)
 
   authTabs.forEach((btn) => btn.addEventListener('click', () => setAuthTab(btn.dataset.authTab)))
 
@@ -138,12 +306,71 @@ function setup() {
     await submitAuthForm('/auth/google-dev', { email }, googleDevForm.querySelector('.google-dev-error'))
   })
 
-  logoutBtn.addEventListener('click', async () => {
-    await fetch(`${apiBase()}/auth/logout`, { method: 'POST', credentials: 'same-origin' })
-    showAuth()
+  createUserForm.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const errorEl = createUserForm.querySelector('.create-user-error')
+    errorEl.textContent = ''
+    const email = createUserForm.querySelector('.new-user-email').value
+    const password = createUserForm.querySelector('.new-user-password').value
+    const isAdmin = createUserForm.querySelector('.new-user-is-admin').checked
+    const res = await fetch(`${apiBase()}/admin/users`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, isAdmin }),
+    })
+    if (res.ok) {
+      location.hash = '#/users'
+    } else {
+      const err = await res.json().catch(() => ({ error: 'request failed' }))
+      errorEl.textContent = err.error || 'request failed'
+    }
+  })
+
+  editUserForm.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const errorEl = editUserForm.querySelector('.edit-user-error')
+    errorEl.textContent = ''
+    const body = {
+      email: editUserForm.querySelector('.edit-user-email').value,
+      isAdmin: editUserForm.querySelector('.edit-user-is-admin').checked,
+    }
+    const password = editUserForm.querySelector('.edit-user-password').value
+    if (password) body.password = password
+
+    const res = await fetch(`${apiBase()}/admin/users/${currentDetailUserId}`, {
+      method: 'PUT',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (res.ok) {
+      fillDetailForm(await res.json())
+    } else {
+      const err = await res.json().catch(() => ({ error: 'request failed' }))
+      errorEl.textContent = err.error || 'request failed'
+    }
+  })
+
+  deleteUserBtn.addEventListener('click', async () => {
+    if (!window.confirm('Delete this user? This cannot be undone.')) return
+    const res = await fetch(`${apiBase()}/admin/users/${currentDetailUserId}`, {
+      method: 'DELETE',
+      credentials: 'same-origin',
+    })
+    if (res.ok) {
+      location.hash = '#/users'
+    } else {
+      const err = await res.json().catch(() => ({ error: 'request failed' }))
+      editUserForm.querySelector('.edit-user-error').textContent = err.error || 'request failed'
+    }
   })
 
   backendSelect.addEventListener('change', () => checkAuth())
+  window.addEventListener('hashchange', () => {
+    if (currentUser) resolveRoute()
+  })
+
   checkAuth()
 }
 

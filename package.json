@@ -1,6 +1,9 @@
 {
   "name": "webtemplate",
   "private": true,
+  "dependencies": {
+    "universal-router": "^10.0.3"
+  },
   "devDependencies": {
     "concurrently": "^10.0.3"
   },
