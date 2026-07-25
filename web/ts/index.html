@@ -121,13 +121,22 @@
       <div id="app-section" class="hidden">
         <div class="mt-6 flex items-center justify-between text-sm">
           <p class="text-slate-600">Signed in as <span id="current-user-email" class="font-semibold text-slate-900"></span></p>
-          <button
-            id="logout-btn"
-            type="button"
-            class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-          >
-            Log out
-          </button>
+          <div class="flex gap-2">
+            <a
+              id="admin-nav-link"
+              href="/ts/users/index.html"
+              class="hidden rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              Manage users
+            </a>
+            <button
+              id="logout-btn"
+              type="button"
+              class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              Log out
+            </button>
+          </div>
         </div>
 
         <div class="mt-6 space-y-4">

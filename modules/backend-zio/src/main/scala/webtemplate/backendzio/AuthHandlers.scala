@@ -37,7 +37,7 @@ final class AuthHandlers(dao: AuthDao, config: AuthConfig, auth: SessionAuthenti
   private def authSuccess(user: UserRecord, status: Status = Status.Ok): ZIO[Any, Throwable, Response] =
     ZIO.attemptBlocking(dao.createSession(user.id, ttlMillis)).map { session =>
       Response
-        .json(upickle.default.write(UserView(user.id, user.email)))
+        .json(upickle.default.write(UserView(user.id, user.email, user.isAdmin)))
         .status(status)
         .addCookie(sessionCookie(session.id, session.expiresAt))
     }
@@ -104,7 +104,7 @@ final class AuthHandlers(dao: AuthDao, config: AuthConfig, auth: SessionAuthenti
 
   def me(req: Request): ZIO[Any, Nothing, Response] =
     auth.authenticate(req).map {
-      case Some(user) => Response.json(upickle.default.write(UserView(user.id, user.email)))
+      case Some(user) => Response.json(upickle.default.write(UserView(user.id, user.email, user.isAdmin)))
       case None       => Response.json(upickle.default.write(ApiError("not authenticated"))).status(Status.Unauthorized)
     }
 

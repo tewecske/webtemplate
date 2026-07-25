@@ -1,7 +1,7 @@
 package webtemplate.backendcask
 
 import webtemplate.shared.config.AppConfig
-import webtemplate.shared.db.{SqliteAuthDao, SqliteEntryDao}
+import webtemplate.shared.db.{SeedAdmin, SqliteAuthDao, SqliteEntryDao}
 
 object Main extends cask.Main {
   private val config = AppConfig.load()
@@ -11,10 +11,12 @@ object Main extends cask.Main {
 
   private val entryDao = SqliteEntryDao(config.sqlitePath)
   private val authDao = SqliteAuthDao(config.sqlitePath)
+  if (config.auth.seedAdminEnabled) SeedAdmin.ensure(authDao, config.auth.seedAdminEmail, config.auth.seedAdminPassword)
   private val authenticator = new SessionAuthenticator(authDao, config.auth)
 
   private val authRoutes = new AuthRoutes(new AuthHandlers(authDao, config.auth, authenticator))
   private val entryRoutes = new EntryRoutes(new EntryHandlers(entryDao, authenticator))
+  private val adminRoutes = new AdminRoutes(new AdminHandlers(authDao, authenticator))
 
-  override def allRoutes: Seq[cask.Routes] = Seq(authRoutes, entryRoutes)
+  override def allRoutes: Seq[cask.Routes] = Seq(authRoutes, entryRoutes, adminRoutes)
 }

@@ -6,7 +6,10 @@ final case class AuthConfig(
   sessionCookieName: String,
   secureCookie: Boolean,
   googleDevLoginEnabled: Boolean,
-  sessionTtlDays: Int
+  sessionTtlDays: Int,
+  seedAdminEnabled: Boolean,
+  seedAdminEmail: String,
+  seedAdminPassword: String
 ) derives ConfigReader
 
 final case class AppConfig(host: String, port: Int, sqlitePath: String, auth: AuthConfig) derives ConfigReader

@@ -36,7 +36,7 @@ final class AuthHandlers(dao: AuthDao, config: AuthConfig, auth: SessionAuthenti
   private def authSuccess(user: UserRecord, statusCode: Int = 200): cask.Response[String] = {
     val session = dao.createSession(user.id, ttlMillis)
     cask.Response(
-      upickle.default.write(UserView(user.id, user.email)),
+      upickle.default.write(UserView(user.id, user.email, user.isAdmin)),
       statusCode = statusCode,
       headers = jsonHeaders,
       cookies = Seq(sessionCookie(session.id, session.expiresAt))
@@ -89,7 +89,7 @@ final class AuthHandlers(dao: AuthDao, config: AuthConfig, auth: SessionAuthenti
 
   def me(request: cask.Request): cask.Response[String] =
     auth.authenticate(request) match {
-      case Some(user) => cask.Response(upickle.default.write(UserView(user.id, user.email)), headers = jsonHeaders)
+      case Some(user) => cask.Response(upickle.default.write(UserView(user.id, user.email, user.isAdmin)), headers = jsonHeaders)
       case None =>
         cask.Response(upickle.default.write(ApiError("not authenticated")), statusCode = 401, headers = jsonHeaders)
     }

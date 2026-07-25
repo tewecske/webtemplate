@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vanilla JS Variant — Add User</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="h-full bg-slate-50 text-slate-900 antialiased">
+    <main class="mx-auto max-w-2xl px-6 py-12">
+      <nav class="mb-8 flex items-center justify-between text-sm">
+        <a href="/vanilla/users/index.html" class="font-semibold text-indigo-600">&larr; User Management</a>
+        <div class="flex gap-4 text-slate-500">
+          <span class="font-semibold text-slate-900">Vanilla JS</span>
+          <a href="/ts/users/new/index.html" class="hover:text-indigo-600">TypeScript</a>
+          <a href="/scalajs/users/new/index.html" class="hover:text-indigo-600">Scala.js</a>
+        </div>
+      </nav>
+
+      <h1 class="text-2xl font-bold tracking-tight">Add User</h1>
+
+      <div class="mt-6 flex items-center gap-2 text-sm">
+        <label for="backend-select" class="font-medium text-slate-700">Backend:</label>
+        <select id="backend-select" class="rounded-md border-slate-300 py-1.5 text-sm">
+          <option value="cask">Cask (:8080)</option>
+          <option value="zio">ZIO HTTP (:8081)</option>
+        </select>
+      </div>
+
+      <div id="auth-section" class="mt-6 max-w-sm">
+        <div class="flex gap-4 border-b border-slate-200 text-sm">
+          <button
+            type="button"
+            data-auth-tab="login"
+            class="auth-tab border-b-2 border-indigo-600 px-1 pb-2 font-semibold text-indigo-600"
+          >
+            Log in
+          </button>
+          <button
+            type="button"
+            data-auth-tab="signup"
+            class="auth-tab border-b-2 border-transparent px-1 pb-2 text-slate-500"
+          >
+            Sign up
+          </button>
+        </div>
+
+        <form id="login-form" class="auth-form mt-4 space-y-3">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">Email</label>
+            <input type="email" class="login-email w-full rounded-md border-slate-300 text-sm shadow-sm" required />
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">Password</label>
+            <input
+              type="password"
+              class="login-password w-full rounded-md border-slate-300 text-sm shadow-sm"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+          >
+            Log in
+          </button>
+          <p class="login-error text-sm text-red-600"></p>
+        </form>
+
+        <form id="signup-form" class="auth-form mt-4 hidden space-y-3">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">Email</label>
+            <input type="email" class="signup-email w-full rounded-md border-slate-300 text-sm shadow-sm" required />
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">Password</label>
+            <input
+              type="password"
+              class="signup-password w-full rounded-md border-slate-300 text-sm shadow-sm"
+              required
+              minlength="8"
+            />
+            <p class="mt-1 text-xs text-slate-400">At least 8 characters.</p>
+          </div>
+          <button
+            type="submit"
+            class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+          >
+            Sign up
+          </button>
+          <p class="signup-error text-sm text-red-600"></p>
+        </form>
+      </div>
+
+      <div id="not-admin-section" class="mt-6 hidden">
+        <p class="text-sm text-slate-600">
+          You're signed in but not an admin. <a href="/vanilla/index.html" class="text-indigo-600 hover:underline">Back to entries</a>.
+        </p>
+      </div>
+
+      <form id="create-user-form" class="mt-6 hidden max-w-sm space-y-3">
+        <div>
+          <label class="mb-1 block text-sm font-medium text-slate-700">Email</label>
+          <input type="email" class="new-user-email w-full rounded-md border-slate-300 text-sm shadow-sm" required />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-slate-700">Password</label>
+          <input
+            type="password"
+            class="new-user-password w-full rounded-md border-slate-300 text-sm shadow-sm"
+            required
+            minlength="8"
+          />
+          <p class="mt-1 text-xs text-slate-400">At least 8 characters.</p>
+        </div>
+        <label class="flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" class="new-user-is-admin" />
+          Admin
+        </label>
+        <button
+          type="submit"
+          class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+        >
+          Create user
+        </button>
+        <p class="create-user-error text-sm text-red-600"></p>
+      </form>
+    </main>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

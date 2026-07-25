@@ -4,6 +4,7 @@ const backendSelect = document.getElementById('backend-select')
 const authSection = document.getElementById('auth-section')
 const appSection = document.getElementById('app-section')
 const currentUserEmail = document.getElementById('current-user-email')
+const adminNavLink = document.getElementById('admin-nav-link')
 const loginForm = document.getElementById('login-form')
 const signupForm = document.getElementById('signup-form')
 const googleDevForm = document.getElementById('google-dev-form')
@@ -71,6 +72,7 @@ function showApp(user) {
   authSection.classList.add('hidden')
   appSection.classList.remove('hidden')
   currentUserEmail.textContent = user.email
+  adminNavLink.classList.toggle('hidden', !user.isAdmin)
   inputIds.forEach(refreshHistory)
 }
 

@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 
-<body class="h-full bg-slate-50 text-slate-900 antialiased">
+<body class="h-full bg-slate-50 text-slate-900 antialiased" data-page="entries">
   <main class="mx-auto max-w-2xl px-6 py-12">
     <nav class="mb-8 flex items-center justify-between text-sm">
       <a href="/index.html" class="font-semibold text-indigo-600">&larr; Template Home</a>
@@ -103,10 +103,16 @@
       <div class="mt-6 flex items-center justify-between text-sm">
         <p class="text-slate-600">Signed in as <span id="current-user-email"
             class="font-semibold text-slate-900"></span></p>
-        <button id="logout-btn" type="button"
-          class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">
-          Log out
-        </button>
+        <div class="flex gap-2">
+          <a id="admin-nav-link" href="/scalajs/users/index.html"
+            class="hidden rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+            Manage users
+          </a>
+          <button id="logout-btn" type="button"
+            class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+            Log out
+          </button>
+        </div>
       </div>
 
       <div class="mt-6 space-y-4">

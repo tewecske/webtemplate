@@ -1,3 +1,5 @@
+export {}
+
 interface Entry {
   inputId: string
   value: string
@@ -12,6 +14,7 @@ interface CreateEntryRequest {
 interface UserView {
   id: number
   email: string
+  isAdmin: boolean
 }
 
 interface ApiError {
@@ -24,6 +27,7 @@ const backendSelect = document.getElementById('backend-select') as HTMLSelectEle
 const authSection = document.getElementById('auth-section') as HTMLElement
 const appSection = document.getElementById('app-section') as HTMLElement
 const currentUserEmail = document.getElementById('current-user-email') as HTMLElement
+const adminNavLink = document.getElementById('admin-nav-link') as HTMLAnchorElement
 const loginForm = document.getElementById('login-form') as HTMLFormElement
 const signupForm = document.getElementById('signup-form') as HTMLFormElement
 const googleDevForm = document.getElementById('google-dev-form') as HTMLFormElement
@@ -92,6 +96,7 @@ function showApp(user: UserView): void {
   authSection.classList.add('hidden')
   appSection.classList.remove('hidden')
   currentUserEmail.textContent = user.email
+  adminNavLink.classList.toggle('hidden', !user.isAdmin)
   inputIds.forEach(refreshHistory)
 }
 

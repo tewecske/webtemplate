@@ -7,21 +7,22 @@ import java.util.Base64
 final class SqliteAuthDao private (conn: Connection) extends AuthDao {
   private val random = new SecureRandom()
 
-  def createUserWithPassword(email: String, passwordHash: String): Either[String, UserRecord] = {
+  def createUserWithPassword(email: String, passwordHash: String, isAdmin: Boolean = false): Either[String, UserRecord] = {
     val normalized = email.trim.toLowerCase
     val createdAt = System.currentTimeMillis()
     val stmt = conn.prepareStatement(
-      "INSERT INTO users (email, password_hash, created_at) VALUES (?, ?, ?)"
+      "INSERT INTO users (email, password_hash, created_at, is_admin) VALUES (?, ?, ?, ?)"
     )
     try {
       stmt.setString(1, normalized)
       stmt.setString(2, passwordHash)
       stmt.setLong(3, createdAt)
+      stmt.setBoolean(4, isAdmin)
       stmt.executeUpdate()
       val rs = stmt.getGeneratedKeys
       try {
         rs.next()
-        Right(UserRecord(rs.getLong(1), normalized, Some(passwordHash), createdAt))
+        Right(UserRecord(rs.getLong(1), normalized, Some(passwordHash), createdAt, isAdmin))
       } finally rs.close()
     } catch {
       case e: SQLException if e.getMessage != null && e.getMessage.toUpperCase.contains("UNIQUE") =>
@@ -32,7 +33,7 @@ final class SqliteAuthDao private (conn: Connection) extends AuthDao {
   def findByEmail(email: String): Option[UserRecord] = {
     val normalized = email.trim.toLowerCase
     val stmt = conn.prepareStatement(
-      "SELECT id, email, password_hash, created_at FROM users WHERE email = ?"
+      "SELECT id, email, password_hash, created_at, is_admin FROM users WHERE email = ?"
     )
     try {
       stmt.setString(1, normalized)
@@ -44,7 +45,8 @@ final class SqliteAuthDao private (conn: Connection) extends AuthDao {
               rs.getLong("id"),
               rs.getString("email"),
               Option(rs.getString("password_hash")),
-              rs.getLong("created_at")
+              rs.getLong("created_at"),
+              rs.getBoolean("is_admin")
             )
           )
         } else None
@@ -54,7 +56,7 @@ final class SqliteAuthDao private (conn: Connection) extends AuthDao {
 
   def findById(userId: Long): Option[UserRecord] = {
     val stmt = conn.prepareStatement(
-      "SELECT id, email, password_hash, created_at FROM users WHERE id = ?"
+      "SELECT id, email, password_hash, created_at, is_admin FROM users WHERE id = ?"
     )
     try {
       stmt.setLong(1, userId)
@@ -66,12 +68,77 @@ final class SqliteAuthDao private (conn: Connection) extends AuthDao {
               rs.getLong("id"),
               rs.getString("email"),
               Option(rs.getString("password_hash")),
-              rs.getLong("created_at")
+              rs.getLong("created_at"),
+              rs.getBoolean("is_admin")
             )
           )
         } else None
       } finally rs.close()
     } finally stmt.close()
+  }
+
+  def listUsers(): List[UserRecord] = {
+    val stmt = conn.prepareStatement(
+      "SELECT id, email, password_hash, created_at, is_admin FROM users ORDER BY created_at DESC, id DESC"
+    )
+    try {
+      val rs = stmt.executeQuery()
+      try {
+        val buf = List.newBuilder[UserRecord]
+        while (rs.next())
+          buf += UserRecord(
+            rs.getLong("id"),
+            rs.getString("email"),
+            Option(rs.getString("password_hash")),
+            rs.getLong("created_at"),
+            rs.getBoolean("is_admin")
+          )
+        buf.result()
+      } finally rs.close()
+    } finally stmt.close()
+  }
+
+  def updateUser(
+      id: Long,
+      email: Option[String],
+      passwordHash: Option[String],
+      isAdmin: Option[Boolean]
+  ): Either[String, UserRecord] =
+    findById(id) match {
+      case None => Left("user not found")
+      case Some(existing) =>
+        val newEmail = email.map(_.trim.toLowerCase).getOrElse(existing.email)
+        val newHash = passwordHash.orElse(existing.passwordHash)
+        val newIsAdmin = isAdmin.getOrElse(existing.isAdmin)
+        val stmt = conn.prepareStatement("UPDATE users SET email = ?, password_hash = ?, is_admin = ? WHERE id = ?")
+        try {
+          stmt.setString(1, newEmail)
+          newHash match {
+            case Some(h) => stmt.setString(2, h)
+            case None    => stmt.setNull(2, java.sql.Types.VARCHAR)
+          }
+          stmt.setBoolean(3, newIsAdmin)
+          stmt.setLong(4, id)
+          stmt.executeUpdate()
+          Right(existing.copy(email = newEmail, passwordHash = newHash, isAdmin = newIsAdmin))
+        } catch {
+          case e: SQLException if e.getMessage != null && e.getMessage.toUpperCase.contains("UNIQUE") =>
+            Left("email already registered")
+        } finally stmt.close()
+    }
+
+  def deleteUser(id: Long): Boolean = {
+    val delSessions = conn.prepareStatement("DELETE FROM sessions WHERE user_id = ?")
+    try {
+      delSessions.setLong(1, id)
+      delSessions.executeUpdate()
+    } finally delSessions.close()
+
+    val delUser = conn.prepareStatement("DELETE FROM users WHERE id = ?")
+    try {
+      delUser.setLong(1, id)
+      delUser.executeUpdate() > 0
+    } finally delUser.close()
   }
 
   def findOrCreateGoogleUser(email: String): UserRecord = {
@@ -160,9 +227,24 @@ object SqliteAuthDao {
           |  id INTEGER PRIMARY KEY AUTOINCREMENT,
           |  email TEXT NOT NULL UNIQUE COLLATE NOCASE,
           |  password_hash TEXT NULL,
-          |  created_at INTEGER NOT NULL
+          |  created_at INTEGER NOT NULL,
+          |  is_admin INTEGER NOT NULL DEFAULT 0
           |)""".stripMargin
       )
+      // First schema migration in this repo's history: users predates the is_admin column, so
+      // CREATE TABLE IF NOT EXISTS above is a no-op against an existing DB and we have to add
+      // the column explicitly. Any future column addition should follow this same pattern.
+      val hasIsAdminColumn = {
+        val rs = pragmaStmt.executeQuery("PRAGMA table_info(users)")
+        try {
+          var found = false
+          while (rs.next())
+            if (rs.getString("name") == "is_admin") found = true
+          found
+        } finally rs.close()
+      }
+      if (!hasIsAdminColumn)
+        pragmaStmt.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
       pragmaStmt.execute(
         """CREATE TABLE IF NOT EXISTS sessions (
           |  id TEXT PRIMARY KEY,
