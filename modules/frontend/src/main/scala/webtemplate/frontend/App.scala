@@ -456,6 +456,12 @@ object App {
       }
     )
 
+    dom.window.addEventListener(
+      "hashchange",
+      (_: dom.Event) => {
+        if (currentUser.isDefined) resolveRoute()
+      }
+    )
     checkAuth()
   }
 }
