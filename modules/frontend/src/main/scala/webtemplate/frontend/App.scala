@@ -10,9 +10,9 @@ import scala.scalajs.js
 import scala.scalajs.js.Thenable.Implicits._
 import scala.util.{Failure, Success, Try}
 
-/** Single router-driven page for Scala.js
-  * scripts: one HTML file, hash-based routes swap which section is visible instead of a
-  * separate HTML file (and separate data-page dispatch) per page.
+/** Single router-driven page for Scala.js. Auth/entries/users markup live in their own HTML
+  * fragments under web/public/pages/, fetched and injected on first need via PageLoader;
+  * hash-based routes then just toggle which injected section is visible.
   */
 object App {
 
@@ -26,6 +26,9 @@ object App {
   // --- element refs ---
   private def authSection: dom.Element = document.getElementById("auth-section")
   private def userMenuEl: dom.Element = document.getElementById("user-menu")
+  private def authMountEl: dom.Element = document.getElementById("auth-mount")
+  private def entriesMountEl: dom.Element = document.getElementById("entries-mount")
+  private def usersMountEl: dom.Element = document.getElementById("users-mount")
   private def loginForm: html.Form = document.getElementById("login-form").asInstanceOf[html.Form]
   private def signupForm: html.Form = document.getElementById("signup-form").asInstanceOf[html.Form]
   private def googleDevForm: html.Form = document.getElementById("google-dev-form").asInstanceOf[html.Form]
@@ -49,13 +52,13 @@ object App {
   private def showAuth(): Unit = {
     authSection.classList.remove("hidden")
     userMenuEl.classList.add("hidden")
-    contentSectionIds.foreach(id => document.getElementById(id).classList.add("hidden"))
+    contentSectionIds.foreach(id => Option(document.getElementById(id)).foreach(_.classList.add("hidden")))
   }
 
   private def showAuthedSection(id: String): Unit = {
     authSection.classList.add("hidden")
     userMenuEl.classList.remove("hidden")
-    contentSectionIds.foreach(sid => document.getElementById(sid).classList.toggle("hidden", sid != id))
+    contentSectionIds.foreach(sid => Option(document.getElementById(sid)).foreach(_.classList.toggle("hidden", sid != id)))
   }
 
   // --- entries ---
@@ -219,29 +222,36 @@ object App {
   private val router = new UniversalRouterImpl[js.Any, RouterContext](
     js.Array(
       route("/") { _ =>
-        showAuthedSection("entries-section")
-        inputIds.foreach(refreshHistory)
+        PageLoader.ensureLoaded("/pages/entries.html", entriesMountEl)(wireEntries()).foreach { _ =>
+          showAuthedSection("entries-section")
+          inputIds.foreach(refreshHistory)
+        }
       },
       route("/users") { _ =>
-        dom.console.log("route /users")
-        if (!currentUser.exists(_.isAdmin)) showAuthedSection("not-admin-section")
-        else {
-          showAuthedSection("users-list-section")
-          loadUsersList()
+        PageLoader.ensureLoaded("/pages/users.html", usersMountEl)(wireUsers()).foreach { _ =>
+          if (!currentUser.exists(_.isAdmin)) showAuthedSection("not-admin-section")
+          else {
+            showAuthedSection("users-list-section")
+            loadUsersList()
+          }
         }
       },
       route("/users/new") { _ =>
-        if (!currentUser.exists(_.isAdmin)) showAuthedSection("not-admin-section")
-        else {
-          resetCreateUserForm()
-          showAuthedSection("users-new-section")
+        PageLoader.ensureLoaded("/pages/users.html", usersMountEl)(wireUsers()).foreach { _ =>
+          if (!currentUser.exists(_.isAdmin)) showAuthedSection("not-admin-section")
+          else {
+            resetCreateUserForm()
+            showAuthedSection("users-new-section")
+          }
         }
       },
       route("/users/:id") { ctx =>
-        if (!currentUser.exists(_.isAdmin)) showAuthedSection("not-admin-section")
-        else {
-          val id = ctx.params.asInstanceOf[js.Dictionary[String]]("id")
-          loadUserDetail(id)
+        PageLoader.ensureLoaded("/pages/users.html", usersMountEl)(wireUsers()).foreach { _ =>
+          if (!currentUser.exists(_.isAdmin)) showAuthedSection("not-admin-section")
+          else {
+            val id = ctx.params.asInstanceOf[js.Dictionary[String]]("id")
+            loadUserDetail(id)
+          }
         }
       }
     ).asInstanceOf[Routes[js.Any, RouterContext]]
@@ -332,9 +342,11 @@ object App {
       }
   }
 
-  def setup(): Unit = {
+  private def wireEntries(): Unit = {
     inputIds.foreach(wireEntryInput)
+  }
 
+  private def wireAuth(): Unit = {
     loginTab.addEventListener("click", (_: dom.Event) => setAuthTab("login"))
     signupTab.addEventListener("click", (_: dom.Event) => setAuthTab("signup"))
 
@@ -374,7 +386,9 @@ object App {
         )
       }
     )
+  }
 
+  private def wireUsers(): Unit = {
     createUserForm.addEventListener(
       "submit",
       (e: dom.Event) => {
@@ -455,13 +469,17 @@ object App {
         }
       }
     )
+  }
 
-    dom.window.addEventListener(
-      "hashchange",
-      (_: dom.Event) => {
-        if (currentUser.isDefined) resolveRoute()
-      }
-    )
-    checkAuth()
+  def setup(): Unit = {
+    PageLoader.ensureLoaded("/pages/auth.html", authMountEl)(wireAuth()).onComplete { _ =>
+      dom.window.addEventListener(
+        "hashchange",
+        (_: dom.Event) => {
+          if (currentUser.isDefined) resolveRoute()
+        }
+      )
+      checkAuth()
+    }
   }
 }

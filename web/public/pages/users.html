@@ -1,0 +1,81 @@
+<div id="users-list-section" class="hidden">
+  <div class="mt-6 flex items-center justify-between">
+    <h2 class="text-lg font-semibold">User Management</h2>
+    <a href="#/users/new" class="btn btn-primary btn-sm">
+      Add user
+    </a>
+  </div>
+  <table class="mt-4 w-full text-left text-sm">
+    <thead class="text-base-content/60">
+      <tr>
+        <th class="pb-2">Email</th>
+        <th class="pb-2">Admin</th>
+        <th class="pb-2">Created</th>
+        <th class="pb-2"></th>
+      </tr>
+    </thead>
+    <tbody id="users-tbody"></tbody>
+  </table>
+  <p id="users-error" class="mt-3 text-sm text-error"></p>
+</div>
+
+<div id="users-new-section" class="hidden">
+  <div class="mt-6">
+    <a href="#/users" class="text-sm font-semibold text-primary">&larr; Back to user list</a>
+    <h2 class="mt-2 text-lg font-semibold">Add User</h2>
+  </div>
+  <form id="create-user-form" class="mt-4 max-w-sm space-y-3">
+    <div>
+      <label class="mb-1 block text-sm font-medium text-base-content">Email</label>
+      <input type="email" class="new-user-email input input-bordered input-sm w-full" required />
+    </div>
+    <div>
+      <label class="mb-1 block text-sm font-medium text-base-content">Password</label>
+      <input type="password" class="new-user-password input input-bordered input-sm w-full" required
+        minlength="8" />
+      <p class="mt-1 text-xs text-base-content/50">At least 8 characters.</p>
+    </div>
+    <label class="flex items-center gap-2 text-sm text-base-content">
+      <input type="checkbox" class="new-user-is-admin checkbox checkbox-sm" />
+      Admin
+    </label>
+    <button type="submit" class="btn btn-primary btn-sm">
+      Create user
+    </button>
+    <p class="create-user-error text-sm text-error"></p>
+  </form>
+</div>
+
+<div id="users-detail-section" class="hidden">
+  <div class="mt-6">
+    <a href="#/users" class="text-sm font-semibold text-primary">&larr; Back to user list</a>
+    <h2 class="mt-2 text-lg font-semibold">Edit User</h2>
+  </div>
+  <form id="edit-user-form" class="mt-4 max-w-sm space-y-3">
+    <div>
+      <label class="mb-1 block text-sm font-medium text-base-content">Email</label>
+      <input type="email" class="edit-user-email input input-bordered input-sm w-full" required />
+    </div>
+    <div>
+      <label class="mb-1 block text-sm font-medium text-base-content">New password</label>
+      <input type="password" class="edit-user-password input input-bordered input-sm w-full" minlength="8"
+        placeholder="Leave blank to keep current password" />
+    </div>
+    <label class="flex items-center gap-2 text-sm text-base-content">
+      <input type="checkbox" class="edit-user-is-admin checkbox checkbox-sm" />
+      Admin
+    </label>
+    <p class="edit-user-self-note hidden text-xs text-base-content/50">
+      You can't remove your own admin access or delete your own account.
+    </p>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm">
+        Save
+      </button>
+      <button type="button" id="delete-user-btn" class="btn btn-outline btn-error btn-sm">
+        Delete
+      </button>
+    </div>
+    <p class="edit-user-error text-sm text-error"></p>
+  </form>
+</div>

@@ -1,0 +1,60 @@
+<div id="auth-section" class="mt-6 max-w-sm">
+  <div class="flex gap-4 border-b border-base-300 text-sm">
+    <button type="button" data-auth-tab="login"
+      class="auth-tab border-b-2 border-primary px-1 pb-2 font-semibold text-primary">
+      Log in
+    </button>
+    <button type="button" data-auth-tab="signup"
+      class="auth-tab border-b-2 border-transparent px-1 pb-2 text-base-content/60">
+      Sign up
+    </button>
+  </div>
+
+  <form id="login-form" class="auth-form mt-4 space-y-3">
+    <div>
+      <label class="mb-1 block text-sm font-medium text-base-content">Email</label>
+      <input type="email" class="login-email input input-bordered input-sm w-full" required />
+    </div>
+    <div>
+      <label class="mb-1 block text-sm font-medium text-base-content">Password</label>
+      <input type="password" class="login-password input input-bordered input-sm w-full" required />
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">
+      Log in
+    </button>
+    <p class="login-error text-sm text-error"></p>
+  </form>
+
+  <form id="signup-form" class="auth-form mt-4 hidden space-y-3">
+    <div>
+      <label class="mb-1 block text-sm font-medium text-base-content">Email</label>
+      <input type="email" class="signup-email input input-bordered input-sm w-full" required />
+    </div>
+    <div>
+      <label class="mb-1 block text-sm font-medium text-base-content">Password</label>
+      <input type="password" class="signup-password input input-bordered input-sm w-full" required minlength="8" />
+      <p class="mt-1 text-xs text-base-content/50">At least 8 characters.</p>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">
+      Sign up
+    </button>
+    <p class="signup-error text-sm text-error"></p>
+  </form>
+
+  <div class="mt-6 border-t border-base-300 pt-4">
+    <p class="text-xs font-semibold uppercase tracking-wide text-base-content/50">Google (dev stub)</p>
+    <p class="mt-1 text-xs text-base-content/60">
+      No real Google OAuth wired up — enter any email to simulate a Google sign-in in dev.
+    </p>
+    <form id="google-dev-form">
+      <div class="mt-2 flex gap-2">
+        <input type="email" class="google-dev-email input input-bordered input-sm flex-1"
+          placeholder="you@example.com" required />
+        <button type="submit" class="btn btn-outline btn-sm">
+          Continue with Google (dev)
+        </button>
+      </div>
+      <p class="google-dev-error mt-1 text-sm text-error"></p>
+    </form>
+  </div>
+</div>
