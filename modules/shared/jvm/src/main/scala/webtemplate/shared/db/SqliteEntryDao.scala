@@ -2,8 +2,7 @@ package webtemplate.shared.db
 
 import webtemplate.shared.Entry
 
-import java.nio.file.{Files, Paths}
-import java.sql.{Connection, DriverManager}
+import java.sql.Connection
 
 final class SqliteEntryDao private (conn: Connection) extends EntryDao {
 
@@ -45,16 +44,10 @@ final class SqliteEntryDao private (conn: Connection) extends EntryDao {
 
 object SqliteEntryDao {
   def apply(dbPath: String): SqliteEntryDao = {
-    val path = Paths.get(dbPath)
-    Option(path.getParent).foreach(Files.createDirectories(_))
-
-    Class.forName("org.sqlite.JDBC")
-    val conn = DriverManager.getConnection(s"jdbc:sqlite:$dbPath")
+    val conn = SqliteConnection.open(dbPath)
 
     val pragmaStmt = conn.createStatement()
     try {
-      pragmaStmt.execute("PRAGMA journal_mode=WAL;")
-      pragmaStmt.execute("PRAGMA busy_timeout=5000;")
       pragmaStmt.execute(
         """CREATE TABLE IF NOT EXISTS entries (
           |  id INTEGER PRIMARY KEY AUTOINCREMENT,

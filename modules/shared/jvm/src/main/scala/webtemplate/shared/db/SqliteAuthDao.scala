@@ -1,7 +1,7 @@
 package webtemplate.shared.db
 
 import java.security.SecureRandom
-import java.sql.{Connection, DriverManager, SQLException}
+import java.sql.{Connection, SQLException}
 import java.util.Base64
 
 final class SqliteAuthDao private (conn: Connection) extends AuthDao {
@@ -215,13 +215,10 @@ final class SqliteAuthDao private (conn: Connection) extends AuthDao {
 
 object SqliteAuthDao {
   def apply(dbPath: String): SqliteAuthDao = {
-    Class.forName("org.sqlite.JDBC")
-    val conn = DriverManager.getConnection(s"jdbc:sqlite:$dbPath")
+    val conn = SqliteConnection.open(dbPath)
 
     val pragmaStmt = conn.createStatement()
     try {
-      pragmaStmt.execute("PRAGMA journal_mode=WAL;")
-      pragmaStmt.execute("PRAGMA busy_timeout=5000;")
       pragmaStmt.execute(
         """CREATE TABLE IF NOT EXISTS users (
           |  id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -231,20 +228,6 @@ object SqliteAuthDao {
           |  is_admin INTEGER NOT NULL DEFAULT 0
           |)""".stripMargin
       )
-      // First schema migration in this repo's history: users predates the is_admin column, so
-      // CREATE TABLE IF NOT EXISTS above is a no-op against an existing DB and we have to add
-      // the column explicitly. Any future column addition should follow this same pattern.
-      val hasIsAdminColumn = {
-        val rs = pragmaStmt.executeQuery("PRAGMA table_info(users)")
-        try {
-          var found = false
-          while (rs.next())
-            if (rs.getString("name") == "is_admin") found = true
-          found
-        } finally rs.close()
-      }
-      if (!hasIsAdminColumn)
-        pragmaStmt.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
       pragmaStmt.execute(
         """CREATE TABLE IF NOT EXISTS sessions (
           |  id TEXT PRIMARY KEY,
