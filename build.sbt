@@ -6,6 +6,8 @@ val upickleVersion  = "4.4.3"
 val sqliteJdbcVer   = "3.53.2.0"
 val pureconfigVer   = "0.17.10"
 val jbcryptVer      = "0.4"
+val scalaLoggingVer = "3.9.5"
+val logbackVer      = "1.5.18"
 
 ThisBuild / scalaVersion := scala3Version
 ThisBuild / organization := "com.example.webtemplate"
@@ -22,7 +24,8 @@ lazy val shared = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies ++= Seq(
       "org.xerial" % "sqlite-jdbc" % sqliteJdbcVer,
       "com.github.pureconfig" %% "pureconfig-core" % pureconfigVer,
-      "org.mindrot" % "jbcrypt" % jbcryptVer
+      "org.mindrot" % "jbcrypt" % jbcryptVer,
+      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVer
     )
   )
 
@@ -33,7 +36,10 @@ lazy val backendCask = project.in(file("modules/backend-cask"))
   .dependsOn(sharedJVM)
   .settings(
     name := "backend-cask",
-    libraryDependencies += "com.lihaoyi" %% "cask" % "0.11.3",
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %% "cask" % "0.11.3",
+      "ch.qos.logback" % "logback-classic" % logbackVer
+    ),
     Compile / mainClass := Some("webtemplate.backendcask.Main"),
     Compile / run / baseDirectory := (ThisBuild / baseDirectory).value,
     reStart / baseDirectory := (ThisBuild / baseDirectory).value
@@ -45,7 +51,8 @@ lazy val backendZio = project.in(file("modules/backend-zio"))
     name := "backend-zio",
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio"      % "2.1.26",
-      "dev.zio" %% "zio-http" % "3.11.2"
+      "dev.zio" %% "zio-http" % "3.11.2",
+      "ch.qos.logback" % "logback-classic" % logbackVer
     ),
     Compile / mainClass := Some("webtemplate.backendzio.Main"),
     Compile / run / baseDirectory := (ThisBuild / baseDirectory).value,

@@ -1,16 +1,19 @@
 package webtemplate.shared.security
 
-import java.time.Instant
+import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
-/** Minimal structured security event log to stdout — single-line, ISO-8601-timestamped,
-  * key=value entries. See CWE-778 / OWASP A09:2021. A real deployment's process
-  * manager/container runtime already captures stdout, so this is 12-factor-friendly without
-  * needing a logging framework. Never log passwords, hashes, or full session tokens.
+/** Structured security event log. See CWE-778 / OWASP A09:2021. Backed by SLF4J
+  * (logback-classic on the classpath) rather than a bespoke logger, so log level, format, and
+  * destination are configured the normal way via logback.xml. Never log passwords, hashes, or
+  * full session tokens.
   */
 object SecurityLog {
+  private val logger = Logger(LoggerFactory.getLogger("SECURITY"))
+
   private def emit(event: String, fields: (String, Any)*): Unit = {
     val kv = fields.map { case (k, v) => s"""$k="$v"""" }.mkString(" ")
-    println(s"[SECURITY] ts=${Instant.now()} event=$event $kv")
+    logger.info(s"event=$event $kv")
   }
 
   def loginFailed(email: String): Unit = emit("login_failed", "email" -> email)
