@@ -2,15 +2,11 @@ package webtemplate.backendcask
 
 import webtemplate.shared.{AdminUserView, ApiError, CreateUserRequest, UpdateUserRequest}
 import webtemplate.shared.auth.{EmailValidation, PasswordHasher, PasswordPolicy}
-import webtemplate.shared.config.AuthConfig
 import webtemplate.shared.db.{AuthDao, UserRecord}
 import webtemplate.shared.security.SecurityLog
 
-final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator, config: AuthConfig) extends CsrfGuard {
-  private val jsonHeaders = Seq("Content-Type" -> "application/json") ++ SecurityHeaders(config)
-
-  private def csrfBlockedResponse: cask.Response[String] =
-    cask.Response(upickle.default.write(ApiError("cross-site request blocked")), statusCode = 403, headers = jsonHeaders)
+final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator) {
+  private val jsonHeaders = Seq("Content-Type" -> "application/json")
 
   def listUsers(request: cask.Request): cask.Response[String] =
     withAdmin(request) { _ =>
@@ -26,9 +22,7 @@ final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator, config: Auth
     }
 
   def createUser(request: cask.Request): cask.Response[String] =
-    if (csrfBlocked(request, config)) csrfBlockedResponse
-    else
-      withAdmin(request) { admin =>
+    withAdmin(request) { admin =>
       try {
         val body = upickle.default.read[CreateUserRequest](request.text())
         val email = body.email.trim
@@ -50,9 +44,7 @@ final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator, config: Auth
     }
 
   def updateUser(id: Long, request: cask.Request): cask.Response[String] =
-    if (csrfBlocked(request, config)) csrfBlockedResponse
-    else
-      withAdmin(request) { admin =>
+    withAdmin(request) { admin =>
       try {
         val body = upickle.default.read[UpdateUserRequest](request.text())
         if (id == admin.id && body.isAdmin.contains(false)) conflict("cannot remove your own admin access")
@@ -74,9 +66,7 @@ final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator, config: Auth
     }
 
   def deleteUser(id: Long, request: cask.Request): cask.Response[String] =
-    if (csrfBlocked(request, config)) csrfBlockedResponse
-    else
-      withAdmin(request) { admin =>
+    withAdmin(request) { admin =>
       if (id == admin.id) conflict("cannot delete your own account")
       else if (dao.deleteUser(id)) {
         SecurityLog.adminAction(admin.id, "delete_user", id)

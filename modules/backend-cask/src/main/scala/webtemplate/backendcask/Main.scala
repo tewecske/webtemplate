@@ -16,9 +16,11 @@ object Main extends cask.Main {
   private val authenticator = new SessionAuthenticator(authDao, config.auth)
   private val authRateLimiter = new RateLimiter(maxAttempts = 5, windowMillis = 15 * 60 * 1000)
 
-  private val authRoutes = new AuthRoutes(new AuthHandlers(authDao, config.auth, authenticator, authRateLimiter))
-  private val entryRoutes = new EntryRoutes(new EntryHandlers(entryDao, authenticator, config.auth))
-  private val adminRoutes = new AdminRoutes(new AdminHandlers(authDao, authenticator, config.auth))
+  private val authRoutes = new AuthRoutes(new AuthHandlers(authDao, config.auth, authenticator), authRateLimiter)
+  private val entryRoutes = new EntryRoutes(new EntryHandlers(entryDao, authenticator))
+  private val adminRoutes = new AdminRoutes(new AdminHandlers(authDao, authenticator))
+
+  override def mainDecorators: Seq[cask.router.Decorator[?, ?, ?, ?]] = Seq(new SecurityDecorator(config.auth))
 
   override def allRoutes: Seq[cask.Routes] = Seq(authRoutes, entryRoutes, adminRoutes)
 }

@@ -4,14 +4,10 @@ import zio._
 import zio.http._
 import webtemplate.shared.{AdminUserView, ApiError, CreateUserRequest, UpdateUserRequest}
 import webtemplate.shared.auth.{EmailValidation, PasswordHasher, PasswordPolicy}
-import webtemplate.shared.config.AuthConfig
 import webtemplate.shared.db.{AuthDao, UserRecord}
 import webtemplate.shared.security.SecurityLog
 
-final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator, config: AuthConfig) extends CsrfGuard {
-
-  private def csrfBlockedResponse: Response =
-    Response.json(upickle.default.write(ApiError("cross-site request blocked"))).status(Status.Forbidden)
+final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator) {
 
   def listUsers(req: Request): ZIO[Any, Nothing, Response] =
     withAdmin(req) { _ =>
@@ -33,8 +29,6 @@ final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator, config: Auth
     }
 
   def createUser(req: Request): ZIO[Any, Nothing, Response] =
-    if (csrfBlocked(req, config)) ZIO.succeed(csrfBlockedResponse)
-    else
     withAdmin(req) { admin =>
       (for {
         bodyStr <- req.body.asString
@@ -57,8 +51,6 @@ final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator, config: Auth
     }
 
   def updateUser(id: Long, req: Request): ZIO[Any, Nothing, Response] =
-    if (csrfBlocked(req, config)) ZIO.succeed(csrfBlockedResponse)
-    else
     withAdmin(req) { admin =>
       (for {
         bodyStr <- req.body.asString
@@ -85,8 +77,6 @@ final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator, config: Auth
     }
 
   def deleteUser(id: Long, req: Request): ZIO[Any, Nothing, Response] =
-    if (csrfBlocked(req, config)) ZIO.succeed(csrfBlockedResponse)
-    else
     withAdmin(req) { admin =>
       if (id == admin.id) ZIO.succeed(conflictResp("cannot delete your own account"))
       else

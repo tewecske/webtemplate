@@ -6,18 +6,12 @@ import webtemplate.shared.{ApiError, GoogleDevLoginRequest, LoginRequest, Signup
 import webtemplate.shared.auth.{EmailValidation, PasswordHasher, PasswordPolicy}
 import webtemplate.shared.config.AuthConfig
 import webtemplate.shared.db.{AuthDao, UserRecord}
-import webtemplate.shared.security.{RateLimiter, SecurityLog}
+import webtemplate.shared.security.SecurityLog
 
 import java.time.Duration
 
-final class AuthHandlers(dao: AuthDao, config: AuthConfig, auth: SessionAuthenticator, rateLimiter: RateLimiter) extends CsrfGuard {
+final class AuthHandlers(dao: AuthDao, config: AuthConfig, auth: SessionAuthenticator) {
   private val ttlMillis = config.sessionTtlDays.toLong * 24 * 60 * 60 * 1000
-
-  private def csrfBlockedResponse: Response =
-    Response.json(upickle.default.write(ApiError("cross-site request blocked"))).status(Status.Forbidden)
-
-  private def tooManyRequests: Response =
-    Response.json(upickle.default.write(ApiError("too many attempts, try again later"))).status(Status.TooManyRequests)
 
   private def sessionCookie(sessionId: String, expiresAt: Long): Cookie.Response =
     Cookie.Response(
@@ -53,84 +47,64 @@ final class AuthHandlers(dao: AuthDao, config: AuthConfig, auth: SessionAuthenti
     ZIO.succeed(Response.json(upickle.default.write(ApiError(msg))).status(Status.BadRequest))
 
   def signup(req: Request): ZIO[Any, Nothing, Response] =
-    if (csrfBlocked(req, config)) ZIO.succeed(csrfBlockedResponse)
-    else
-      (for {
-        bodyStr <- req.body.asString
-        body    <- ZIO.attempt(upickle.default.read[SignupRequest](bodyStr))
-        email = body.email.trim
-        key    = "signup:" + email.toLowerCase
-        resp <-
-          if (rateLimiter.isLocked(key)) ZIO.succeed { SecurityLog.rateLimited(key, "signup"); tooManyRequests }
-          else {
-            rateLimiter.recordFailure(key)
-            if (!EmailValidation.isValid(email))
-              ZIO.succeed(Response.json(upickle.default.write(ApiError("invalid email"))).status(Status.BadRequest))
-            else
-              PasswordPolicy.validate(body.password) match {
-                case Left(err) => ZIO.succeed(Response.json(upickle.default.write(ApiError(err))).status(Status.BadRequest))
-                case Right(()) =>
-                  ZIO.attemptBlocking(dao.createUserWithPassword(email, PasswordHasher.hash(body.password))).flatMap {
-                    case Right(user) =>
-                      SecurityLog.signupSucceeded(user.id, user.email)
-                      authSuccess(user, Status.Created)
-                    case Left(err) =>
-                      ZIO.succeed(Response.json(upickle.default.write(ApiError(err))).status(Status.BadRequest))
-                  }
+    (for {
+      bodyStr <- req.body.asString
+      body    <- ZIO.attempt(upickle.default.read[SignupRequest](bodyStr))
+      email = body.email.trim
+      resp <-
+        if (!EmailValidation.isValid(email))
+          ZIO.succeed(Response.json(upickle.default.write(ApiError("invalid email"))).status(Status.BadRequest))
+        else
+          PasswordPolicy.validate(body.password) match {
+            case Left(err) => ZIO.succeed(Response.json(upickle.default.write(ApiError(err))).status(Status.BadRequest))
+            case Right(()) =>
+              ZIO.attemptBlocking(dao.createUserWithPassword(email, PasswordHasher.hash(body.password))).flatMap {
+                case Right(user) =>
+                  SecurityLog.signupSucceeded(user.id, user.email)
+                  authSuccess(user, Status.Created)
+                case Left(err) =>
+                  ZIO.succeed(Response.json(upickle.default.write(ApiError(err))).status(Status.BadRequest))
               }
           }
-      } yield resp).catchAll { e =>
-        ZIO.succeed(Response.json(upickle.default.write(ApiError(s"invalid request: ${e.getMessage}"))).status(Status.BadRequest))
-      }
+    } yield resp).catchAll { e =>
+      ZIO.succeed(Response.json(upickle.default.write(ApiError(s"invalid request: ${e.getMessage}"))).status(Status.BadRequest))
+    }
 
   def login(req: Request): ZIO[Any, Nothing, Response] =
-    if (csrfBlocked(req, config)) ZIO.succeed(csrfBlockedResponse)
-    else
-      (for {
-        bodyStr <- req.body.asString
-        body    <- ZIO.attempt(upickle.default.read[LoginRequest](bodyStr))
-        key      = "login:" + body.email.trim.toLowerCase
-        resp <-
-          if (rateLimiter.isLocked(key)) ZIO.succeed { SecurityLog.rateLimited(key, "login"); tooManyRequests }
-          else
-            ZIO.attemptBlocking(dao.findByEmail(body.email)).flatMap {
-              case Some(user) if user.passwordHash.exists(h => PasswordHasher.verify(body.password, h)) =>
-                rateLimiter.recordSuccess(key)
-                SecurityLog.loginSucceeded(user.id, user.email)
-                authSuccess(user)
-              case _ =>
-                rateLimiter.recordFailure(key)
-                SecurityLog.loginFailed(body.email)
-                ZIO.succeed(
-                  Response.json(upickle.default.write(ApiError("invalid email or password"))).status(Status.Unauthorized)
-                )
-            }
-      } yield resp).catchAll { e =>
-        ZIO.succeed(Response.json(upickle.default.write(ApiError(s"invalid request: ${e.getMessage}"))).status(Status.BadRequest))
+    (for {
+      bodyStr <- req.body.asString
+      body    <- ZIO.attempt(upickle.default.read[LoginRequest](bodyStr))
+      userOpt <- ZIO.attemptBlocking(dao.findByEmail(body.email))
+      resp <- userOpt match {
+        case Some(user) if user.passwordHash.exists(h => PasswordHasher.verify(body.password, h)) =>
+          SecurityLog.loginSucceeded(user.id, user.email)
+          authSuccess(user)
+        case _ =>
+          SecurityLog.loginFailed(body.email)
+          ZIO.succeed(
+            Response.json(upickle.default.write(ApiError("invalid email or password"))).status(Status.Unauthorized)
+          )
       }
+    } yield resp).catchAll { e =>
+      ZIO.succeed(Response.json(upickle.default.write(ApiError(s"invalid request: ${e.getMessage}"))).status(Status.BadRequest))
+    }
 
   def googleDevLogin(req: Request): ZIO[Any, Nothing, Response] =
-    if (csrfBlocked(req, config)) ZIO.succeed(csrfBlockedResponse)
-    else if (!config.googleDevLoginEnabled)
+    if (!config.googleDevLoginEnabled)
       ZIO.succeed(Response.json(upickle.default.write(ApiError("dev google login is disabled"))).status(Status.NotFound))
     else
       (for {
         bodyStr <- req.body.asString
         body    <- ZIO.attempt(upickle.default.read[GoogleDevLoginRequest](bodyStr))
         email = body.email.trim
-        key    = "signup:" + email.toLowerCase
         resp <-
-          if (rateLimiter.isLocked(key)) ZIO.succeed { SecurityLog.rateLimited(key, "google-dev-login"); tooManyRequests }
-          else {
-            rateLimiter.recordFailure(key)
-            if (!EmailValidation.isValid(email))
-              ZIO.succeed(Response.json(upickle.default.write(ApiError("invalid email"))).status(Status.BadRequest))
-            else
-              ZIO.attemptBlocking(dao.findOrCreateGoogleUser(email)).flatMap { user =>
-                SecurityLog.loginSucceeded(user.id, user.email)
-                authSuccess(user)
-              }
-          }
+          if (!EmailValidation.isValid(email))
+            ZIO.succeed(Response.json(upickle.default.write(ApiError("invalid email"))).status(Status.BadRequest))
+          else
+            ZIO.attemptBlocking(dao.findOrCreateGoogleUser(email)).flatMap { user =>
+              SecurityLog.loginSucceeded(user.id, user.email)
+              authSuccess(user)
+            }
       } yield resp).catchAll { e =>
         ZIO.succeed(Response.json(upickle.default.write(ApiError(s"invalid request: ${e.getMessage}"))).status(Status.BadRequest))
       }
@@ -142,12 +116,10 @@ final class AuthHandlers(dao: AuthDao, config: AuthConfig, auth: SessionAuthenti
     }
 
   def logout(req: Request): ZIO[Any, Nothing, Response] =
-    if (csrfBlocked(req, config)) ZIO.succeed(csrfBlockedResponse)
-    else
-      auth.authenticate(req).flatMap { userOpt =>
-        userOpt.foreach(u => SecurityLog.sessionDeleted(u.id))
-        ZIO
-          .foreachDiscard(req.cookie(config.sessionCookieName))(c => ZIO.attemptBlocking(dao.deleteSession(c.content)).ignore)
-          .as(Response.json(upickle.default.write(Map("status" -> "ok"))).addCookie(clearCookie))
-      }
+    auth.authenticate(req).flatMap { userOpt =>
+      userOpt.foreach(u => SecurityLog.sessionDeleted(u.id))
+      ZIO
+        .foreachDiscard(req.cookie(config.sessionCookieName))(c => ZIO.attemptBlocking(dao.deleteSession(c.content)).ignore)
+        .as(Response.json(upickle.default.write(Map("status" -> "ok"))).addCookie(clearCookie))
+    }
 }
