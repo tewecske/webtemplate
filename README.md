@@ -1,8 +1,7 @@
 # webtemplate
 
-Full-stack Scala template: two JVM backends (Cask + zio-http), a cross-compiled `shared`
-module, and a Vite frontend with three implementations of the same demo (vanilla JS,
-TypeScript, Scala.js) — all backed by SQLite.
+Full-stack Scala template: JVM backend (zio-http), a cross-compiled `shared`
+module, and a Vite frontend (Scala.js) — backed by SQLite.
 
 ## Prerequisites
 
@@ -26,17 +25,15 @@ This first runs `predev` (`sbt --client 'root/compile'`), which boots sbt's shar
 server once so the three concurrent `sbt --client` watches below don't race each other trying
 to start it. Then it brings up four watch processes together:
 
-- `backend-cask` on `http://localhost:8080` (auto-restarts on change via sbt-revolver)
-- `backend-zio` on `http://localhost:8081` (auto-restarts on change via sbt-revolver)
+- `backend-zio` on `http://localhost:8080` (auto-restarts on change via sbt-revolver)
 - the `frontend` Scala.js module (`~fastLinkJS`, recompiles on change)
 - the Vite dev server (prints its own URL, typically `http://localhost:5173`) with HMR for
   JS/TS/CSS/HTML
 
-Open the Vite URL and use the landing page to reach the three demo variants. Each page has a
-dropdown to pick which backend it talks to — both are reachable same-origin via Vite's dev
-proxy (`/api/cask/*` → :8080, `/api/zio/*` → :8081), so there's no CORS to configure in dev.
+Open the Vite URL and use the landing page to reach the demo. Vite's dev
+proxy (`/api/zio/*` → :8080), so there's no CORS to configure in dev.
 
-Data is stored in `data/cask.sqlite` and `data/zio.sqlite` (gitignored, created on first run).
+Data is stored in `data/web.sqlite` (gitignored, created on first run).
 
 ### Alternative: tmux, one pane per process
 
@@ -45,7 +42,7 @@ npm run dev:tmux
 ```
 
 Runs the same four processes, but instead of interleaving prefixed output in one terminal
-(what `concurrently` does above), it opens a new tmux window with four panes — cask, zio-http,
+(what `concurrently` does above), it opens a new tmux window with three panes — zio-http,
 the Scala.js watcher, and Vite each in their own titled pane. If you're already inside tmux it
 adds the window to your current session; otherwise it creates/reuses a `webtemplate` session
 and attaches to it. Close the window (or `Ctrl+b` `&`) to stop everything.

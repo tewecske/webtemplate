@@ -10,7 +10,7 @@ import scala.scalajs.js
 import scala.scalajs.js.Thenable.Implicits._
 import scala.util.{Failure, Success, Try}
 
-/** Single router-driven page for the Scala.js variant, mirroring the vanilla/ts main
+/** Single router-driven page for Scala.js
   * scripts: one HTML file, hash-based routes swap which section is visible instead of a
   * separate HTML file (and separate data-page dispatch) per page.
   */
@@ -24,7 +24,6 @@ object App {
   private var currentDetailUserId: Option[String] = None
 
   // --- element refs ---
-  private def backendSelect: html.Select = document.getElementById("backend-select").asInstanceOf[html.Select]
   private def authSection: dom.Element = document.getElementById("auth-section")
   private def userMenuEl: dom.Element = document.getElementById("user-menu")
   private def loginForm: html.Form = document.getElementById("login-form").asInstanceOf[html.Form]
@@ -39,7 +38,7 @@ object App {
   private def editUserForm: html.Form = document.getElementById("edit-user-form").asInstanceOf[html.Form]
   private def deleteUserBtn: html.Button = document.getElementById("delete-user-btn").asInstanceOf[html.Button]
 
-  private def apiBase(): String = s"/api/${backendSelect.value}"
+  private def apiBase(): String = s"/api/zio"
 
   private def jsonHeaders(): dom.Headers = {
     val h = new dom.Headers()
@@ -224,6 +223,7 @@ object App {
         inputIds.foreach(refreshHistory)
       },
       route("/users") { _ =>
+        dom.console.log("route /users")
         if (!currentUser.exists(_.isAdmin)) showAuthedSection("not-admin-section")
         else {
           showAuthedSection("users-list-section")
@@ -453,14 +453,6 @@ object App {
               case Failure(_) => editUserForm.querySelector(".edit-user-error").textContent = "request failed"
             }
         }
-      }
-    )
-
-    backendSelect.addEventListener("change", (_: dom.Event) => checkAuth())
-    dom.window.addEventListener(
-      "hashchange",
-      (_: dom.Event) => {
-        if (currentUser.isDefined) resolveRoute()
       }
     )
 

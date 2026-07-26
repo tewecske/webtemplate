@@ -11,21 +11,13 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html',
-        vanilla: 'vanilla/index.html',
-        ts: 'ts/index.html',
-        scalajs: 'scalajs/index.html',
       },
     },
   },
   server: {
     proxy: {
-      '/api/cask': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/cask/, ''),
-      },
       '/api/zio': {
-        target: 'http://localhost:8081',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/zio/, ''),
       },

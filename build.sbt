@@ -32,19 +32,6 @@ lazy val shared = crossProject(JSPlatform, JVMPlatform)
 lazy val sharedJVM = shared.jvm
 lazy val sharedJS  = shared.js
 
-lazy val backendCask = project.in(file("modules/backend-cask"))
-  .dependsOn(sharedJVM)
-  .settings(
-    name := "backend-cask",
-    libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "cask" % "0.11.3",
-      "ch.qos.logback" % "logback-classic" % logbackVer
-    ),
-    Compile / mainClass := Some("webtemplate.backendcask.Main"),
-    Compile / run / baseDirectory := (ThisBuild / baseDirectory).value,
-    reStart / baseDirectory := (ThisBuild / baseDirectory).value
-  )
-
 lazy val backendZio = project.in(file("modules/backend-zio"))
   .dependsOn(sharedJVM)
   .settings(
@@ -79,7 +66,7 @@ lazy val frontend = project.in(file("modules/frontend"))
   )
 
 lazy val root = project.in(file("."))
-  .aggregate(sharedJVM, sharedJS, backendCask, backendZio, frontend)
+  .aggregate(sharedJVM, sharedJS, backendZio, frontend)
   .settings(
     name := "webtemplate",
     publish / skip := true

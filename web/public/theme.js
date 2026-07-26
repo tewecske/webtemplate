@@ -1,4 +1,4 @@
-// Shared by all page variants. Kept as an external script (not inlined) so the CSP on each
+// Kept as an external script (not inlined) so the CSP on each
 // page can use `script-src 'self'` without `unsafe-inline`.
 (function () {
   var t = localStorage.getItem('theme')
