@@ -126,13 +126,13 @@ object App {
     usersTbody.innerHTML = ""
     users.foreach { u =>
       val tr = document.createElement("tr")
-      tr.setAttribute("class", "border-t border-slate-100")
+      tr.setAttribute("class", "border-t border-base-200")
       tr.innerHTML = s"""
         <td class="py-2">${u.email}</td>
         <td class="py-2">${if (u.isAdmin) "Yes" else "No"}</td>
         <td class="py-2">${new js.Date(u.createdAt.toDouble).toLocaleDateString()}</td>
         <td class="py-2 text-right">
-          <a href="#/users/${u.id}" class="text-indigo-600 hover:underline">View / Edit</a>
+          <a href="#/users/${u.id}" class="text-primary hover:underline">View / Edit</a>
         </td>
       """
       usersTbody.appendChild(tr)
@@ -258,10 +258,10 @@ object App {
   }
 
   private def setTabActive(btn: html.Button, active: Boolean): Unit = {
-    btn.classList.toggle("border-indigo-600", active)
-    btn.classList.toggle("text-indigo-600", active)
+    btn.classList.toggle("border-primary", active)
+    btn.classList.toggle("text-primary", active)
     btn.classList.toggle("border-transparent", !active)
-    btn.classList.toggle("text-slate-500", !active)
+    btn.classList.toggle("text-base-content/60", !active)
   }
 
   private def afterAuthSuccess(): Unit = {

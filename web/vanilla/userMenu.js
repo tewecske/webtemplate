@@ -1,9 +1,9 @@
 export function mountUserMenu(container, user, { onManageUsers, onLogout }) {
   container.innerHTML = `
-    <p class="text-slate-600">Signed in as <span class="menu-email font-semibold text-slate-900"></span></p>
+    <p class="text-base-content/70">Signed in as <span class="menu-email font-semibold text-base-content"></span></p>
     <div class="flex gap-2">
-      <a href="#/users" class="manage-users-link hidden rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">Manage users</a>
-      <button type="button" class="logout-btn rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">Log out</button>
+      <a href="#/users" class="manage-users-link hidden btn btn-outline btn-sm">Manage users</a>
+      <button type="button" class="logout-btn btn btn-outline btn-sm">Log out</button>
     </div>
   `
 

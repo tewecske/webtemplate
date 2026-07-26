@@ -4,46 +4,70 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TypeScript Variant</title>
+    <script>
+      (function () {
+        var t = localStorage.getItem('theme');
+        if (t) document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
-  <body class="h-full bg-slate-50 text-slate-900 antialiased">
+  <body class="h-full bg-base-200 text-base-content antialiased">
     <main class="mx-auto max-w-2xl px-6 py-12">
-      <nav class="mb-8 flex items-center justify-between text-sm">
-        <a href="/index.html" class="font-semibold text-indigo-600">&larr; Template Home</a>
-        <div class="flex gap-4 text-slate-500">
-          <a href="/vanilla/index.html" class="hover:text-indigo-600">Vanilla JS</a>
-          <span class="font-semibold text-slate-900">TypeScript</span>
-          <a href="/scalajs/index.html" class="hover:text-indigo-600">Scala.js</a>
+      <nav class="mb-8 flex items-center justify-between gap-4 text-sm">
+        <a href="/index.html" class="font-semibold text-primary">&larr; Template Home</a>
+        <div class="flex items-center gap-4 text-base-content/60">
+          <a href="/vanilla/index.html" class="hover:text-primary">Vanilla JS</a>
+          <span class="font-semibold text-base-content">TypeScript</span>
+          <a href="/scalajs/index.html" class="hover:text-primary">Scala.js</a>
+          <select id="theme-select" class="select select-bordered select-xs" aria-label="Theme">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="cupcake">Cupcake</option>
+            <option value="synthwave">Synthwave</option>
+            <option value="corporate">Corporate</option>
+          </select>
         </div>
       </nav>
+      <script>
+        (function () {
+          var select = document.getElementById('theme-select');
+          var current = document.documentElement.getAttribute('data-theme') || 'light';
+          select.value = current;
+          select.addEventListener('change', function () {
+            document.documentElement.setAttribute('data-theme', select.value);
+            localStorage.setItem('theme', select.value);
+          });
+        })();
+      </script>
 
       <h1 class="text-2xl font-bold tracking-tight">TypeScript Variant</h1>
-      <p class="mt-2 text-slate-600">
+      <p class="mt-2 text-base-content/70">
         Same feature as the vanilla JS page, implemented with typed fetch calls and interfaces
         mirroring the shared Scala DTOs.
       </p>
 
       <div class="mt-6 flex items-center gap-2 text-sm">
-        <label for="backend-select" class="font-medium text-slate-700">Backend:</label>
-        <select id="backend-select" class="rounded-md border-slate-300 py-1.5 text-sm">
+        <label for="backend-select" class="font-medium text-base-content">Backend:</label>
+        <select id="backend-select" class="select select-bordered select-sm">
           <option value="cask">Cask (:8080)</option>
           <option value="zio">ZIO HTTP (:8081)</option>
         </select>
       </div>
 
       <div id="auth-section" class="mt-6 max-w-sm">
-        <div class="flex gap-4 border-b border-slate-200 text-sm">
+        <div class="flex gap-4 border-b border-base-300 text-sm">
           <button
             type="button"
             data-auth-tab="login"
-            class="auth-tab border-b-2 border-indigo-600 px-1 pb-2 font-semibold text-indigo-600"
+            class="auth-tab border-b-2 border-primary px-1 pb-2 font-semibold text-primary"
           >
             Log in
           </button>
           <button
             type="button"
             data-auth-tab="signup"
-            class="auth-tab border-b-2 border-transparent px-1 pb-2 text-slate-500"
+            class="auth-tab border-b-2 border-transparent px-1 pb-2 text-base-content/60"
           >
             Sign up
           </button>
@@ -51,138 +75,140 @@
 
         <form id="login-form" class="auth-form mt-4 space-y-3">
           <div>
-            <label class="mb-1 block text-sm font-medium text-slate-700">Email</label>
-            <input type="email" class="login-email w-full rounded-md border-slate-300 text-sm shadow-sm" required />
+            <label class="mb-1 block text-sm font-medium text-base-content">Email</label>
+            <input type="email" class="login-email input input-bordered input-sm w-full" required />
           </div>
           <div>
-            <label class="mb-1 block text-sm font-medium text-slate-700">Password</label>
+            <label class="mb-1 block text-sm font-medium text-base-content">Password</label>
             <input
               type="password"
-              class="login-password w-full rounded-md border-slate-300 text-sm shadow-sm"
+              class="login-password input input-bordered input-sm w-full"
               required
             />
           </div>
           <button
             type="submit"
-            class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+            class="btn btn-primary btn-sm"
           >
             Log in
           </button>
-          <p class="login-error text-sm text-red-600"></p>
+          <p class="login-error text-sm text-error"></p>
         </form>
 
         <form id="signup-form" class="auth-form mt-4 hidden space-y-3">
           <div>
-            <label class="mb-1 block text-sm font-medium text-slate-700">Email</label>
-            <input type="email" class="signup-email w-full rounded-md border-slate-300 text-sm shadow-sm" required />
+            <label class="mb-1 block text-sm font-medium text-base-content">Email</label>
+            <input type="email" class="signup-email input input-bordered input-sm w-full" required />
           </div>
           <div>
-            <label class="mb-1 block text-sm font-medium text-slate-700">Password</label>
+            <label class="mb-1 block text-sm font-medium text-base-content">Password</label>
             <input
               type="password"
-              class="signup-password w-full rounded-md border-slate-300 text-sm shadow-sm"
+              class="signup-password input input-bordered input-sm w-full"
               required
               minlength="8"
             />
-            <p class="mt-1 text-xs text-slate-400">At least 8 characters.</p>
+            <p class="mt-1 text-xs text-base-content/50">At least 8 characters.</p>
           </div>
           <button
             type="submit"
-            class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+            class="btn btn-primary btn-sm"
           >
             Sign up
           </button>
-          <p class="signup-error text-sm text-red-600"></p>
+          <p class="signup-error text-sm text-error"></p>
         </form>
 
-        <div class="mt-6 border-t border-slate-200 pt-4">
-          <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Google (dev stub)</p>
-          <p class="mt-1 text-xs text-slate-500">
+        <div class="mt-6 border-t border-base-300 pt-4">
+          <p class="text-xs font-semibold uppercase tracking-wide text-base-content/50">Google (dev stub)</p>
+          <p class="mt-1 text-xs text-base-content/60">
             No real Google OAuth wired up — enter any email to simulate a Google sign-in in dev.
           </p>
-          <form id="google-dev-form" class="mt-2 flex gap-2">
-            <input
-              type="email"
-              class="google-dev-email flex-1 rounded-md border-slate-300 text-sm shadow-sm"
-              placeholder="you@example.com"
-              required
-            />
-            <button
-              type="submit"
-              class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-            >
-              Continue with Google (dev)
-            </button>
+          <form id="google-dev-form" class="mt-2">
+            <div class="flex gap-2">
+              <input
+                type="email"
+                class="google-dev-email input input-bordered input-sm flex-1"
+                placeholder="you@example.com"
+                required
+              />
+              <button
+                type="submit"
+                class="btn btn-outline btn-sm"
+              >
+                Continue with Google (dev)
+              </button>
+            </div>
+            <p class="google-dev-error mt-1 text-sm text-error"></p>
           </form>
-          <p class="google-dev-error mt-1 text-sm text-red-600"></p>
         </div>
       </div>
 
       <div id="user-menu" class="mt-6 hidden flex items-center justify-between text-sm"></div>
 
       <div id="not-admin-section" class="mt-6 hidden">
-        <p class="text-sm text-slate-600">
-          You're signed in but not an admin. <a href="#/" class="text-indigo-600 hover:underline">Back to entries</a>.
+        <p class="text-sm text-base-content/70">
+          You're signed in but not an admin. <a href="#/" class="text-primary hover:underline">Back to entries</a>.
         </p>
       </div>
 
       <div id="not-found-section" class="mt-6 hidden">
-        <p class="text-sm text-slate-600">
-          User not found. <a href="#/users" class="text-indigo-600 hover:underline">Back to user list</a>.
+        <p class="text-sm text-base-content/70">
+          User not found. <a href="#/users" class="text-primary hover:underline">Back to user list</a>.
         </p>
       </div>
 
       <div id="entries-section" class="hidden">
         <div class="mt-6 space-y-4">
-          <div data-input-id="note-a" class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <label class="mb-1 block text-sm font-medium text-slate-700">Note A</label>
+          <div data-input-id="note-a" class="rounded-lg border border-base-300 bg-base-100 p-4 shadow-sm">
+            <label class="mb-1 block text-sm font-medium text-base-content">Note A</label>
             <div class="flex gap-2">
               <input
                 type="text"
-                class="entry-input flex-1 rounded-md border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                class="entry-input input input-bordered input-sm flex-1"
                 placeholder="Type a value…"
               />
               <button
-                class="save-btn rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+                class="save-btn btn btn-primary btn-sm"
               >
                 Save
               </button>
             </div>
-            <ul class="history-list mt-3 space-y-1 text-sm text-slate-600"></ul>
+            <ul class="history-list mt-3 space-y-1 text-sm text-base-content/70"></ul>
           </div>
 
-          <div data-input-id="note-b" class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <label class="mb-1 block text-sm font-medium text-slate-700">Note B</label>
+          <div data-input-id="note-b" class="rounded-lg border border-base-300 bg-base-100 p-4 shadow-sm">
+            <label class="mb-1 block text-sm font-medium text-base-content">Note B</label>
             <div class="flex gap-2">
               <input
                 type="text"
-                class="entry-input flex-1 rounded-md border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                class="entry-input input input-bordered input-sm flex-1"
                 placeholder="Type a value…"
               />
               <button
-                class="save-btn rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+                class="save-btn btn btn-primary btn-sm"
               >
                 Save
               </button>
             </div>
-            <ul class="history-list mt-3 space-y-1 text-sm text-slate-600"></ul>
+            <ul class="history-list mt-3 space-y-1 text-sm text-base-content/70"></ul>
           </div>
 
-          <div data-input-id="note-c" class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <label class="mb-1 block text-sm font-medium text-slate-700">Note C</label>
+          <div data-input-id="note-c" class="rounded-lg border border-base-300 bg-base-100 p-4 shadow-sm">
+            <label class="mb-1 block text-sm font-medium text-base-content">Note C</label>
             <div class="flex gap-2">
               <input
                 type="text"
-                class="entry-input flex-1 rounded-md border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                class="entry-input input input-bordered input-sm flex-1"
                 placeholder="Type a value…"
               />
               <button
-                class="save-btn rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+                class="save-btn btn btn-primary btn-sm"
               >
                 Save
               </button>
             </div>
-            <ul class="history-list mt-3 space-y-1 text-sm text-slate-600"></ul>
+            <ul class="history-list mt-3 space-y-1 text-sm text-base-content/70"></ul>
           </div>
         </div>
       </div>
@@ -192,13 +218,13 @@
           <h2 class="text-lg font-semibold">User Management</h2>
           <a
             href="#/users/new"
-            class="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-500"
+            class="btn btn-primary btn-sm"
           >
             Add user
           </a>
         </div>
         <table class="mt-4 w-full text-left text-sm">
-          <thead class="text-slate-500">
+          <thead class="text-base-content/60">
             <tr>
               <th class="pb-2">Email</th>
               <th class="pb-2">Admin</th>
@@ -208,85 +234,85 @@
           </thead>
           <tbody id="users-tbody"></tbody>
         </table>
-        <p id="users-error" class="mt-3 text-sm text-red-600"></p>
+        <p id="users-error" class="mt-3 text-sm text-error"></p>
       </div>
 
       <div id="users-new-section" class="hidden">
         <div class="mt-6">
-          <a href="#/users" class="text-sm font-semibold text-indigo-600">&larr; Back to user list</a>
+          <a href="#/users" class="text-sm font-semibold text-primary">&larr; Back to user list</a>
           <h2 class="mt-2 text-lg font-semibold">Add User</h2>
         </div>
         <form id="create-user-form" class="mt-4 max-w-sm space-y-3">
           <div>
-            <label class="mb-1 block text-sm font-medium text-slate-700">Email</label>
-            <input type="email" class="new-user-email w-full rounded-md border-slate-300 text-sm shadow-sm" required />
+            <label class="mb-1 block text-sm font-medium text-base-content">Email</label>
+            <input type="email" class="new-user-email input input-bordered input-sm w-full" required />
           </div>
           <div>
-            <label class="mb-1 block text-sm font-medium text-slate-700">Password</label>
+            <label class="mb-1 block text-sm font-medium text-base-content">Password</label>
             <input
               type="password"
-              class="new-user-password w-full rounded-md border-slate-300 text-sm shadow-sm"
+              class="new-user-password input input-bordered input-sm w-full"
               required
               minlength="8"
             />
-            <p class="mt-1 text-xs text-slate-400">At least 8 characters.</p>
+            <p class="mt-1 text-xs text-base-content/50">At least 8 characters.</p>
           </div>
-          <label class="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" class="new-user-is-admin" />
+          <label class="flex items-center gap-2 text-sm text-base-content">
+            <input type="checkbox" class="new-user-is-admin checkbox checkbox-sm" />
             Admin
           </label>
           <button
             type="submit"
-            class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+            class="btn btn-primary btn-sm"
           >
             Create user
           </button>
-          <p class="create-user-error text-sm text-red-600"></p>
+          <p class="create-user-error text-sm text-error"></p>
         </form>
       </div>
 
       <div id="users-detail-section" class="hidden">
         <div class="mt-6">
-          <a href="#/users" class="text-sm font-semibold text-indigo-600">&larr; Back to user list</a>
+          <a href="#/users" class="text-sm font-semibold text-primary">&larr; Back to user list</a>
           <h2 class="mt-2 text-lg font-semibold">Edit User</h2>
         </div>
         <form id="edit-user-form" class="mt-4 max-w-sm space-y-3">
           <div>
-            <label class="mb-1 block text-sm font-medium text-slate-700">Email</label>
-            <input type="email" class="edit-user-email w-full rounded-md border-slate-300 text-sm shadow-sm" required />
+            <label class="mb-1 block text-sm font-medium text-base-content">Email</label>
+            <input type="email" class="edit-user-email input input-bordered input-sm w-full" required />
           </div>
           <div>
-            <label class="mb-1 block text-sm font-medium text-slate-700">New password</label>
+            <label class="mb-1 block text-sm font-medium text-base-content">New password</label>
             <input
               type="password"
-              class="edit-user-password w-full rounded-md border-slate-300 text-sm shadow-sm"
+              class="edit-user-password input input-bordered input-sm w-full"
               minlength="8"
               placeholder="Leave blank to keep current password"
             />
           </div>
-          <label class="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" class="edit-user-is-admin" />
+          <label class="flex items-center gap-2 text-sm text-base-content">
+            <input type="checkbox" class="edit-user-is-admin checkbox checkbox-sm" />
             Admin
           </label>
-          <p class="edit-user-self-note hidden text-xs text-slate-400">
+          <p class="edit-user-self-note hidden text-xs text-base-content/50">
             You can't remove your own admin access or delete your own account.
           </p>
           <div class="flex gap-2">
             <button
               type="submit"
-              class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+              class="btn btn-primary btn-sm"
             >
               Save
             </button>
             <button
               type="button"
               id="delete-user-btn"
-              class="rounded-md border border-red-300 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
+              class="btn btn-outline btn-error btn-sm"
             >
               Delete
             </button>
           </div>
-          <p class="edit-user-error text-sm text-red-600"></p>
+          <p class="edit-user-error text-sm text-error"></p>
         </form>
       </div>
     </main>

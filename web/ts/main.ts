@@ -123,13 +123,13 @@ function renderUsers(users: AdminUserView[]): void {
   usersTbody.innerHTML = ''
   for (const u of users) {
     const tr = document.createElement('tr')
-    tr.className = 'border-t border-slate-100'
+    tr.className = 'border-t border-base-200'
     tr.innerHTML = `
       <td class="py-2">${u.email}</td>
       <td class="py-2">${u.isAdmin ? 'Yes' : 'No'}</td>
       <td class="py-2">${new Date(u.createdAt).toLocaleDateString()}</td>
       <td class="py-2 text-right">
-        <a href="#/users/${u.id}" class="text-indigo-600 hover:underline">View / Edit</a>
+        <a href="#/users/${u.id}" class="text-primary hover:underline">View / Edit</a>
       </td>
     `
     usersTbody.appendChild(tr)
@@ -256,10 +256,10 @@ function setAuthTab(tab: string): void {
   signupForm.classList.toggle('hidden', tab !== 'signup')
   authTabs.forEach((btn) => {
     const active = btn.dataset.authTab === tab
-    btn.classList.toggle('border-indigo-600', active)
-    btn.classList.toggle('text-indigo-600', active)
+    btn.classList.toggle('border-primary', active)
+    btn.classList.toggle('text-primary', active)
     btn.classList.toggle('border-transparent', !active)
-    btn.classList.toggle('text-slate-500', !active)
+    btn.classList.toggle('text-base-content/60', !active)
   })
 }
 
