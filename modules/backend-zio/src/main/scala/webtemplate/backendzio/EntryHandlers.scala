@@ -3,14 +3,20 @@ package webtemplate.backendzio
 import zio._
 import zio.http._
 import webtemplate.shared.{ApiError, CreateEntryRequest}
+import webtemplate.shared.config.AuthConfig
 import webtemplate.shared.db.SqliteEntryDao
 
-final class EntryHandlers(dao: SqliteEntryDao, auth: SessionAuthenticator) {
+final class EntryHandlers(dao: SqliteEntryDao, auth: SessionAuthenticator, config: AuthConfig) extends CsrfGuard {
+
+  private def csrfBlockedResponse: Response =
+    Response.json(upickle.default.write(ApiError("cross-site request blocked"))).status(Status.Forbidden)
 
   val health: Response =
     Response.json(upickle.default.write(Map("status" -> "ok")))
 
   def createEntry(req: Request): ZIO[Any, Nothing, Response] =
+    if (csrfBlocked(req, config)) ZIO.succeed(csrfBlockedResponse)
+    else
     auth.authenticate(req).flatMap {
       case None => unauthorized
       case Some(user) =>

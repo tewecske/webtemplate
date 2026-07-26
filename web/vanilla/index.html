@@ -3,13 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'"
+    />
     <title>Vanilla JS Variant</title>
-    <script>
-      (function () {
-        var t = localStorage.getItem('theme');
-        if (t) document.documentElement.setAttribute('data-theme', t);
-      })();
-    </script>
+    <script src="/theme.js"></script>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body class="h-full bg-base-200 text-base-content antialiased">
@@ -29,17 +28,6 @@
           </select>
         </div>
       </nav>
-      <script>
-        (function () {
-          var select = document.getElementById('theme-select');
-          var current = document.documentElement.getAttribute('data-theme') || 'light';
-          select.value = current;
-          select.addEventListener('change', function () {
-            document.documentElement.setAttribute('data-theme', select.value);
-            localStorage.setItem('theme', select.value);
-          });
-        })();
-      </script>
 
       <h1 class="text-2xl font-bold tracking-tight">Vanilla JavaScript Variant</h1>
       <p class="mt-2 text-base-content/70">

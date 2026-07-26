@@ -3,10 +3,15 @@ package webtemplate.backendzio
 import zio._
 import zio.http._
 import webtemplate.shared.{AdminUserView, ApiError, CreateUserRequest, UpdateUserRequest}
-import webtemplate.shared.auth.PasswordHasher
+import webtemplate.shared.auth.{EmailValidation, PasswordHasher, PasswordPolicy}
+import webtemplate.shared.config.AuthConfig
 import webtemplate.shared.db.{AuthDao, UserRecord}
+import webtemplate.shared.security.SecurityLog
 
-final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator) {
+final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator, config: AuthConfig) extends CsrfGuard {
+
+  private def csrfBlockedResponse: Response =
+    Response.json(upickle.default.write(ApiError("cross-site request blocked"))).status(Status.Forbidden)
 
   def listUsers(req: Request): ZIO[Any, Nothing, Response] =
     withAdmin(req) { _ =>
@@ -28,23 +33,32 @@ final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator) {
     }
 
   def createUser(req: Request): ZIO[Any, Nothing, Response] =
-    withAdmin(req) { _ =>
+    if (csrfBlocked(req, config)) ZIO.succeed(csrfBlockedResponse)
+    else
+    withAdmin(req) { admin =>
       (for {
         bodyStr <- req.body.asString
         body    <- ZIO.attempt(upickle.default.read[CreateUserRequest](bodyStr))
         email = body.email.trim
         resp <-
-          if (email.isEmpty || !email.contains("@")) ZIO.succeed(badRequestResp("invalid email"))
-          else if (body.password.length < 8) ZIO.succeed(badRequestResp("password must be at least 8 characters"))
+          if (!EmailValidation.isValid(email)) ZIO.succeed(badRequestResp("invalid email"))
           else
-            ZIO.attemptBlocking(dao.createUserWithPassword(email, PasswordHasher.hash(body.password), body.isAdmin)).map {
-              case Right(user) => Response.json(upickle.default.write(toView(user))).status(Status.Created)
-              case Left(err)   => badRequestResp(err)
+            PasswordPolicy.validate(body.password) match {
+              case Left(err) => ZIO.succeed(badRequestResp(err))
+              case Right(()) =>
+                ZIO.attemptBlocking(dao.createUserWithPassword(email, PasswordHasher.hash(body.password), body.isAdmin)).map {
+                  case Right(user) =>
+                    SecurityLog.adminAction(admin.id, "create_user", user.id, s"isAdmin=${user.isAdmin}")
+                    Response.json(upickle.default.write(toView(user))).status(Status.Created)
+                  case Left(err) => badRequestResp(err)
+                }
             }
       } yield resp).catchAll(e => ZIO.succeed(badRequestResp(s"invalid request: ${e.getMessage}")))
     }
 
   def updateUser(id: Long, req: Request): ZIO[Any, Nothing, Response] =
+    if (csrfBlocked(req, config)) ZIO.succeed(csrfBlockedResponse)
+    else
     withAdmin(req) { admin =>
       (for {
         bodyStr <- req.body.asString
@@ -52,25 +66,36 @@ final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator) {
         resp <-
           if (id == admin.id && body.isAdmin.contains(false))
             ZIO.succeed(conflictResp("cannot remove your own admin access"))
+          else if (body.email.exists(e => !EmailValidation.isValid(e.trim)))
+            ZIO.succeed(badRequestResp("invalid email"))
+          else if (body.password.exists(p => PasswordPolicy.validate(p).isLeft))
+            ZIO.succeed(badRequestResp(body.password.flatMap(p => PasswordPolicy.validate(p).left.toOption).getOrElse("invalid password")))
           else
             ZIO
               .attemptBlocking(dao.updateUser(id, body.email.map(_.trim), body.password.map(PasswordHasher.hash), body.isAdmin))
               .map {
-                case Right(user)             => Response.json(upickle.default.write(toView(user)))
-                case Left("user not found")  => notFoundResp
-                case Left(err)               => badRequestResp(err)
+                case Right(user) =>
+                  val roleNote = body.isAdmin.map(v => s" isAdminChanged=$v").getOrElse("")
+                  SecurityLog.adminAction(admin.id, "update_user", user.id, roleNote.trim)
+                  Response.json(upickle.default.write(toView(user)))
+                case Left("user not found") => notFoundResp
+                case Left(err)              => badRequestResp(err)
               }
       } yield resp).catchAll(e => ZIO.succeed(badRequestResp(s"invalid request: ${e.getMessage}")))
     }
 
   def deleteUser(id: Long, req: Request): ZIO[Any, Nothing, Response] =
+    if (csrfBlocked(req, config)) ZIO.succeed(csrfBlockedResponse)
+    else
     withAdmin(req) { admin =>
       if (id == admin.id) ZIO.succeed(conflictResp("cannot delete your own account"))
       else
         ZIO
           .attemptBlocking(dao.deleteUser(id))
           .map {
-            case true  => Response.json(upickle.default.write(Map("status" -> "ok")))
+            case true =>
+              SecurityLog.adminAction(admin.id, "delete_user", id)
+              Response.json(upickle.default.write(Map("status" -> "ok")))
             case false => notFoundResp
           }
           .catchAll(_ => ZIO.succeed(internalError))

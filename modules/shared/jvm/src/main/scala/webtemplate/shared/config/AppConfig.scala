@@ -9,7 +9,8 @@ final case class AuthConfig(
   sessionTtlDays: Int,
   seedAdminEnabled: Boolean,
   seedAdminEmail: String,
-  seedAdminPassword: String
+  seedAdminPassword: String,
+  allowedOrigins: List[String]
 ) derives ConfigReader
 
 final case class AppConfig(host: String, port: Int, sqlitePath: String, auth: AuthConfig) derives ConfigReader

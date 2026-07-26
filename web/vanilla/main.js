@@ -95,19 +95,31 @@ function wireEntryInput(inputId) {
 
 // --- users list ---
 
+function textCell(text) {
+  const td = document.createElement('td')
+  td.className = 'py-2'
+  td.textContent = text
+  return td
+}
+
 function renderUsers(users) {
   usersTbody.innerHTML = ''
   for (const u of users) {
     const tr = document.createElement('tr')
     tr.className = 'border-t border-base-200'
-    tr.innerHTML = `
-      <td class="py-2">${u.email}</td>
-      <td class="py-2">${u.isAdmin ? 'Yes' : 'No'}</td>
-      <td class="py-2">${new Date(u.createdAt).toLocaleDateString()}</td>
-      <td class="py-2 text-right">
-        <a href="#/users/${u.id}" class="text-primary hover:underline">View / Edit</a>
-      </td>
-    `
+    tr.appendChild(textCell(u.email))
+    tr.appendChild(textCell(u.isAdmin ? 'Yes' : 'No'))
+    tr.appendChild(textCell(new Date(u.createdAt).toLocaleDateString()))
+
+    const linkTd = document.createElement('td')
+    linkTd.className = 'py-2 text-right'
+    const link = document.createElement('a')
+    link.href = `#/users/${u.id}`
+    link.className = 'text-primary hover:underline'
+    link.textContent = 'View / Edit'
+    linkTd.appendChild(link)
+    tr.appendChild(linkTd)
+
     usersTbody.appendChild(tr)
   }
 }

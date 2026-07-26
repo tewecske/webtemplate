@@ -1,11 +1,16 @@
 package webtemplate.backendcask
 
 import webtemplate.shared.{AdminUserView, ApiError, CreateUserRequest, UpdateUserRequest}
-import webtemplate.shared.auth.PasswordHasher
+import webtemplate.shared.auth.{EmailValidation, PasswordHasher, PasswordPolicy}
+import webtemplate.shared.config.AuthConfig
 import webtemplate.shared.db.{AuthDao, UserRecord}
+import webtemplate.shared.security.SecurityLog
 
-final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator) {
-  private val jsonHeaders = Seq("Content-Type" -> "application/json")
+final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator, config: AuthConfig) extends CsrfGuard {
+  private val jsonHeaders = Seq("Content-Type" -> "application/json") ++ SecurityHeaders(config)
+
+  private def csrfBlockedResponse: cask.Response[String] =
+    cask.Response(upickle.default.write(ApiError("cross-site request blocked")), statusCode = 403, headers = jsonHeaders)
 
   def listUsers(request: cask.Request): cask.Response[String] =
     withAdmin(request) { _ =>
@@ -21,16 +26,23 @@ final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator) {
     }
 
   def createUser(request: cask.Request): cask.Response[String] =
-    withAdmin(request) { _ =>
+    if (csrfBlocked(request, config)) csrfBlockedResponse
+    else
+      withAdmin(request) { admin =>
       try {
         val body = upickle.default.read[CreateUserRequest](request.text())
         val email = body.email.trim
-        if (email.isEmpty || !email.contains("@")) badRequest("invalid email")
-        else if (body.password.length < 8) badRequest("password must be at least 8 characters")
+        if (!EmailValidation.isValid(email)) badRequest("invalid email")
         else
-          dao.createUserWithPassword(email, PasswordHasher.hash(body.password), body.isAdmin) match {
-            case Right(user) => cask.Response(upickle.default.write(toView(user)), statusCode = 201, headers = jsonHeaders)
-            case Left(err)   => badRequest(err)
+          PasswordPolicy.validate(body.password) match {
+            case Left(err) => badRequest(err)
+            case Right(()) =>
+              dao.createUserWithPassword(email, PasswordHasher.hash(body.password), body.isAdmin) match {
+                case Right(user) =>
+                  SecurityLog.adminAction(admin.id, "create_user", user.id, s"isAdmin=${user.isAdmin}")
+                  cask.Response(upickle.default.write(toView(user)), statusCode = 201, headers = jsonHeaders)
+                case Left(err) => badRequest(err)
+              }
           }
       } catch {
         case e: Exception => badRequest(s"invalid request: ${e.getMessage}")
@@ -38,13 +50,21 @@ final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator) {
     }
 
   def updateUser(id: Long, request: cask.Request): cask.Response[String] =
-    withAdmin(request) { admin =>
+    if (csrfBlocked(request, config)) csrfBlockedResponse
+    else
+      withAdmin(request) { admin =>
       try {
         val body = upickle.default.read[UpdateUserRequest](request.text())
         if (id == admin.id && body.isAdmin.contains(false)) conflict("cannot remove your own admin access")
+        else if (body.email.exists(e => !EmailValidation.isValid(e.trim))) badRequest("invalid email")
+        else if (body.password.exists(p => PasswordPolicy.validate(p).isLeft))
+          badRequest(body.password.flatMap(p => PasswordPolicy.validate(p).left.toOption).getOrElse("invalid password"))
         else
           dao.updateUser(id, body.email.map(_.trim), body.password.map(PasswordHasher.hash), body.isAdmin) match {
-            case Right(user)            => cask.Response(upickle.default.write(toView(user)), headers = jsonHeaders)
+            case Right(user) =>
+              val roleNote = body.isAdmin.map(v => s" isAdminChanged=$v").getOrElse("")
+              SecurityLog.adminAction(admin.id, "update_user", user.id, roleNote.trim)
+              cask.Response(upickle.default.write(toView(user)), headers = jsonHeaders)
             case Left("user not found") => notFound
             case Left(err)              => badRequest(err)
           }
@@ -54,10 +74,14 @@ final class AdminHandlers(dao: AuthDao, auth: SessionAuthenticator) {
     }
 
   def deleteUser(id: Long, request: cask.Request): cask.Response[String] =
-    withAdmin(request) { admin =>
+    if (csrfBlocked(request, config)) csrfBlockedResponse
+    else
+      withAdmin(request) { admin =>
       if (id == admin.id) conflict("cannot delete your own account")
-      else if (dao.deleteUser(id)) cask.Response(upickle.default.write(Map("status" -> "ok")), headers = jsonHeaders)
-      else notFound
+      else if (dao.deleteUser(id)) {
+        SecurityLog.adminAction(admin.id, "delete_user", id)
+        cask.Response(upickle.default.write(Map("status" -> "ok")), headers = jsonHeaders)
+      } else notFound
     }
 
   private def withAdmin(request: cask.Request)(f: UserRecord => cask.Response[String]): cask.Response[String] =

@@ -122,19 +122,31 @@ object App {
 
   // --- users list ---
 
+  private def textCell(text: String): dom.Element = {
+    val td = document.createElement("td")
+    td.setAttribute("class", "py-2")
+    td.textContent = text
+    td
+  }
+
   private def renderUsers(users: List[AdminUserView]): Unit = {
     usersTbody.innerHTML = ""
     users.foreach { u =>
       val tr = document.createElement("tr")
       tr.setAttribute("class", "border-t border-base-200")
-      tr.innerHTML = s"""
-        <td class="py-2">${u.email}</td>
-        <td class="py-2">${if (u.isAdmin) "Yes" else "No"}</td>
-        <td class="py-2">${new js.Date(u.createdAt.toDouble).toLocaleDateString()}</td>
-        <td class="py-2 text-right">
-          <a href="#/users/${u.id}" class="text-primary hover:underline">View / Edit</a>
-        </td>
-      """
+      tr.appendChild(textCell(u.email))
+      tr.appendChild(textCell(if (u.isAdmin) "Yes" else "No"))
+      tr.appendChild(textCell(new js.Date(u.createdAt.toDouble).toLocaleDateString()))
+
+      val linkTd = document.createElement("td")
+      linkTd.setAttribute("class", "py-2 text-right")
+      val link = document.createElement("a").asInstanceOf[html.Anchor]
+      link.setAttribute("href", s"#/users/${u.id}")
+      link.setAttribute("class", "text-primary hover:underline")
+      link.textContent = "View / Edit"
+      linkTd.appendChild(link)
+      tr.appendChild(linkTd)
+
       usersTbody.appendChild(tr)
     }
   }
