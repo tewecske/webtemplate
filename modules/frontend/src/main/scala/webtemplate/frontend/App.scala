@@ -10,7 +10,7 @@ import scala.scalajs.js
 import scala.scalajs.js.Thenable.Implicits._
 import scala.util.{Failure, Success, Try}
 
-/** Single router-driven page for Scala.js. Auth/entries/users markup live in their own HTML
+/** Single router-driven page for Scala.js. Auth/entries/page2/users markup live in their own HTML
   * fragments under web/public/pages/, fetched and injected on first need via PageLoader;
   * hash-based routes then just toggle which injected section is visible.
   */
@@ -18,7 +18,7 @@ object App {
 
   private val inputIds = List("note-a", "note-b", "note-c")
   private val contentSectionIds =
-    List("not-admin-section", "not-found-section", "entries-section", "users-list-section", "users-new-section", "users-detail-section")
+    List("not-admin-section", "not-found-section", "entries-section", "page2-section", "users-list-section", "users-new-section", "users-detail-section")
 
   private var currentUser: Option[UserView] = None
   private var currentDetailUserId: Option[String] = None
@@ -204,6 +204,72 @@ object App {
       }
   }
 
+  // --- page2 ---
+
+  val page2SectionId = "page2-section"
+  private def select(inputId: String): dom.Element =
+    document.querySelector(s"#$inputId")
+
+  private def savePage2Item(name: String, nickname: String): scala.concurrent.Future[Unit] = {
+    val init = new dom.RequestInit {
+      method = dom.HttpMethod.POST
+      headers = jsonHeaders()
+      credentials = dom.RequestCredentials.`same-origin`
+      body = upickle.default.write(webtemplate.shared.CreatePage2ItemRequest(name, nickname))
+    }
+    dom.fetch(s"${apiBase()}/page2items", init).map { res =>
+      if (res.status == 401) showAuth()
+    }
+  }
+
+  private def refreshPage2Items(): Unit = {
+    val init = new dom.RequestInit { credentials = dom.RequestCredentials.`same-origin` }
+    dom
+      .fetch(s"${apiBase()}/page2items", init)
+      .flatMap { res =>
+        if (res.status == 401) {
+          showAuth()
+          scala.concurrent.Future.successful("[]")
+        } else res.text()
+      }
+      .onComplete {
+        case Success(json) => renderPage2Items(upickle.default.read[List[webtemplate.shared.Page2Item]](json))
+        case Failure(_)     => ()
+      }
+  }
+
+  private def renderPage2Items(page2Items: List[webtemplate.shared.Page2Item]): Unit = {
+    val list = select(page2SectionId).querySelector("#page2-names")
+    list.innerHTML = ""
+    page2Items.foreach { e =>
+      val li = document.createElement("li")
+      li.textContent = e.name + e.nickname
+      list.appendChild(li)
+    }
+  }
+
+  private def wirePage2(): Unit = {
+    val root = select(page2SectionId)
+    val nameInput = root.querySelector("#page2-name").asInstanceOf[html.Input]
+    val nicknameInput = root.querySelector("#page2-nickname").asInstanceOf[html.Input]
+    val button = root.querySelector("#page2-save-btn").asInstanceOf[html.Button]
+    button.addEventListener(
+      "click",
+      (_: dom.Event) => {
+        val nameValue = nameInput.value.trim
+        val nicknameValue = nicknameInput.value.trim
+        if (nameValue.nonEmpty && nicknameValue.nonEmpty) {
+          savePage2Item(nameValue, nicknameValue).foreach { _ =>
+            nameInput.value = ""
+            nicknameInput.value = ""
+            refreshPage2Items()
+          }
+        }
+      }
+    )
+  }
+
+
   // --- router ---
   // Hash-based (not History API): each variant is an independent Vite entry, so path-based
   // routing would need a per-prefix server rewrite rule in both dev and prod. Hash routing
@@ -225,10 +291,18 @@ object App {
     }
   }
 
+  private def page2Action(ctx: RouteContext[js.Any, RouterContext]): Unit = {
+    PageLoader.ensureLoaded("/pages/page2.html", contentMountEl)(wirePage2()).foreach { _ =>
+      showAuthedSection("page2-section")
+      refreshPage2Items()
+    }
+  }
+
   private val router = new UniversalRouterImpl[js.Any, RouterContext](
     js.Array(
       route("/")(homeAction),
       route("/home")(homeAction),
+      route("/page2items")(page2Action),
       route("/users") { _ =>
         PageLoader.ensureLoaded("/pages/users.html", contentMountEl)(wireUsers()).foreach { _ =>
           if (!currentUser.exists(_.isAdmin)) showAuthedSection("not-admin-section")
