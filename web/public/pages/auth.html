@@ -1,60 +1,67 @@
-<div id="auth-section" class="mt-6">
-  <div class="flex">
+<div id="auth-section" class="mt-6 max-w-sm">
+  <div class="flex gap-4 border-b border-base-300 text-sm">
     <button type="button" data-auth-tab="login"
-      class="auth-tab">
+      class="auth-tab border-b-2 border-primary px-1 pb-2 font-semibold text-primary">
       Log in
     </button>
     <button type="button" data-auth-tab="signup"
-      class="auth-tab">
+      class="auth-tab border-b-2 border-transparent px-1 pb-2 text-base-content/60">
       Sign up
     </button>
   </div>
 
-  <form id="login-form" class="auth-form">
-    <div>
-      <label class="mb-1">Email</label>
-      <input type="email" class="login-email" required />
-    </div>
-    <div>
-      <label class="mb-1">Password</label>
-      <input type="password" class="login-password" required />
-    </div>
-    <button type="submit" class="btn">
-      Log in
-    </button>
-    <p class="login-error"></p>
+  <form id="login-form" class="auth-form mt-4">
+    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+      <legend class="fieldset-legend">Log in</legend>
+
+      <label class="label">Email</label>
+      <input type="email" class="login-email input w-full" required />
+
+      <label class="label">Password</label>
+      <input type="password" class="login-password input w-full" required />
+
+      <button type="submit" class="btn btn-primary mt-2">
+        Log in
+      </button>
+      <p class="login-error text-sm text-error"></p>
+    </fieldset>
   </form>
 
-  <form id="signup-form" class="auth-form hidden">
-    <div>
-      <label class="mb-1">Email</label>
-      <input type="email" class="signup-email" required />
-    </div>
-    <div>
-      <label class="mb-1">Password</label>
-      <input type="password" class="signup-password" required minlength="8" />
-      <p class="mt-1">At least 8 characters.</p>
-    </div>
-    <button type="submit" class="btn">
-      Sign up
-    </button>
-    <p class="signup-error"></p>
+  <form id="signup-form" class="auth-form mt-4 hidden">
+    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+      <legend class="fieldset-legend">Sign up</legend>
+
+      <label class="label">Email</label>
+      <input type="email" class="signup-email input w-full" required />
+
+      <label class="label">Password</label>
+      <input type="password" class="signup-password input w-full" required minlength="8" />
+      <p class="label">At least 8 characters.</p>
+
+      <button type="submit" class="btn btn-primary mt-2">
+        Sign up
+      </button>
+      <p class="signup-error text-sm text-error"></p>
+    </fieldset>
   </form>
 
-  <div class="mt-6">
-    <p class="text-xs">Google (dev stub)</p>
-    <p class="mt-1">
+  <div class="mt-6 border-t border-base-300 pt-4">
+    <p class="text-xs font-semibold uppercase tracking-wide text-base-content/50">Google (dev stub)</p>
+    <p class="mt-1 text-xs text-base-content/60">
       No real Google OAuth wired up — enter any email to simulate a Google sign-in in dev.
     </p>
-    <form id="google-dev-form">
-      <div class="mt-2">
-        <input type="email" class="google-dev-email"
-          placeholder="you@example.com" required />
-        <button type="submit" class="btn">
+    <form id="google-dev-form" class="mt-2">
+      <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+        <legend class="fieldset-legend">Google sign-in</legend>
+
+        <label class="label">Email</label>
+        <input type="email" class="google-dev-email input w-full" placeholder="you@example.com" required />
+
+        <button type="submit" class="btn btn-outline mt-2">
           Continue with Google (dev)
         </button>
-      </div>
-      <p class="google-dev-error"></p>
+        <p class="google-dev-error text-sm text-error"></p>
+      </fieldset>
     </form>
   </div>
 </div>

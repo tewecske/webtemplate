@@ -1,81 +1,89 @@
 <div id="users-list-section" class="hidden">
-  <div class="mt-6">
-    <h2 class="text-lg">User Management</h2>
-    <a href="#/users/new" class="btn">
+  <div class="mt-6 flex items-center justify-between">
+    <h2 class="text-lg font-semibold">User Management</h2>
+    <a href="#/users/new" class="btn btn-primary btn-sm">
       Add user
     </a>
   </div>
-  <table class="mt-4">
-    <thead class="text-base-content/60">
-      <tr>
-        <th class="pb-2">Email</th>
-        <th class="pb-2">Admin</th>
-        <th class="pb-2">Created</th>
-        <th class="pb-2"></th>
-      </tr>
-    </thead>
-    <tbody id="users-tbody"></tbody>
-  </table>
-  <p id="users-error" class="mt-3"></p>
+  <div class="mt-4 overflow-x-auto">
+    <table class="table">
+      <thead class="text-base-content/60">
+        <tr>
+          <th class="pb-2">Email</th>
+          <th class="pb-2">Admin</th>
+          <th class="pb-2">Created</th>
+          <th class="pb-2"></th>
+        </tr>
+      </thead>
+      <tbody id="users-tbody"></tbody>
+    </table>
+  </div>
+  <p id="users-error" class="mt-3 text-sm text-error"></p>
 </div>
 
-<div id="users-new-section" class="hidden">
+<div id="users-new-section" class="hidden max-w-sm">
   <div class="mt-6">
-    <a href="#/users" class="text-sm">&larr; Back to user list</a>
-    <h2 class="mt-2">Add User</h2>
+    <a href="#/users" class="text-sm font-semibold text-primary">&larr; Back to user list</a>
+    <h2 class="mt-2 text-lg font-semibold">Add User</h2>
   </div>
   <form id="create-user-form" class="mt-4">
-    <div>
-      <label class="mb-1">Email</label>
-      <input type="email" class="new-user-email" required />
-    </div>
-    <div>
-      <label class="mb-1">Password</label>
-      <input type="password" class="new-user-password" required
-        minlength="8" />
-      <p class="mt-1">At least 8 characters.</p>
-    </div>
-    <label class="flex">
-      <input type="checkbox" class="new-user-is-admin" />
-      Admin
-    </label>
-    <button type="submit" class="btn">
-      Create user
-    </button>
-    <p class="create-user-error"></p>
+    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+      <legend class="fieldset-legend">User details</legend>
+
+      <label class="label">Email</label>
+      <input type="email" class="new-user-email input w-full" required />
+
+      <label class="label">Password</label>
+      <input type="password" class="new-user-password input w-full" required minlength="8" />
+      <p class="label">At least 8 characters.</p>
+
+      <label class="label">
+        <input type="checkbox" class="new-user-is-admin checkbox checkbox-sm" />
+        Admin
+      </label>
+
+      <button type="submit" class="btn btn-primary mt-2">
+        Create user
+      </button>
+      <p class="create-user-error text-sm text-error"></p>
+    </fieldset>
   </form>
 </div>
 
-<div id="users-detail-section" class="hidden">
+<div id="users-detail-section" class="hidden max-w-sm">
   <div class="mt-6">
-    <a href="#/users" class="text-sm">&larr; Back to user list</a>
-    <h2 class="mt-2">Edit User</h2>
+    <a href="#/users" class="text-sm font-semibold text-primary">&larr; Back to user list</a>
+    <h2 class="mt-2 text-lg font-semibold">Edit User</h2>
   </div>
   <form id="edit-user-form" class="mt-4">
-    <div>
-      <label class="mb-1">Email</label>
-      <input type="email" class="edit-user-email" required />
-    </div>
-    <div>
-      <label class="mb-1">New password</label>
-      <input type="password" class="edit-user-password" minlength="8"
+    <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+      <legend class="fieldset-legend">User details</legend>
+
+      <label class="label">Email</label>
+      <input type="email" class="edit-user-email input w-full" required />
+
+      <label class="label">New password</label>
+      <input type="password" class="edit-user-password input w-full" minlength="8"
         placeholder="Leave blank to keep current password" />
-    </div>
-    <label class="flex">
-      <input type="checkbox" class="edit-user-is-admin" />
-      Admin
-    </label>
-    <p class="edit-user-self-note hidden">
-      You can't remove your own admin access or delete your own account.
-    </p>
-    <div class="flex">
-      <button type="submit" class="btn">
-        Save
-      </button>
-      <button type="button" id="delete-user-btn" class="btn">
-        Delete
-      </button>
-    </div>
-    <p class="edit-user-error"></p>
+
+      <label class="label">
+        <input type="checkbox" class="edit-user-is-admin checkbox checkbox-sm" />
+        Admin
+      </label>
+
+      <p class="edit-user-self-note hidden text-xs text-base-content/50">
+        You can't remove your own admin access or delete your own account.
+      </p>
+
+      <div class="mt-2 flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          Save
+        </button>
+        <button type="button" id="delete-user-btn" class="btn btn-outline btn-error">
+          Delete
+        </button>
+      </div>
+      <p class="edit-user-error text-sm text-error"></p>
+    </fieldset>
   </form>
 </div>
