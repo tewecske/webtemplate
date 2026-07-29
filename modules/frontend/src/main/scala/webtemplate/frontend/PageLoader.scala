@@ -13,14 +13,15 @@ import scala.scalajs.js.Thenable.Implicits._
   */
 object PageLoader {
 
-  private val cache = scala.collection.mutable.Map.empty[String, Future[Unit]]
+  private val htmlCache = scala.collection.mutable.Map.empty[String, Future[String]]
+  private val mountedUrl = scala.collection.mutable.Map.empty[dom.Element, String]
 
   def ensureLoaded(url: String, mount: dom.Element)(onFirstLoad: => Unit): Future[Unit] =
-    cache.getOrElseUpdate(
-      url,
-      dom.fetch(url).flatMap(_.text()).map { html =>
+    if (mountedUrl.get(mount).contains(url)) Future.successful(())
+    else
+      htmlCache.getOrElseUpdate(url, dom.fetch(url).flatMap(_.text())).map { html =>
         mount.innerHTML = html
+        mountedUrl(mount) = url
         onFirstLoad
       }
-    )
 }

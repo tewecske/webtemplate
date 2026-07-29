@@ -27,8 +27,7 @@ object App {
   private def authSection: dom.Element = document.getElementById("auth-section")
   private def userMenuEl: dom.Element = document.getElementById("user-menu")
   private def authMountEl: dom.Element = document.getElementById("auth-mount")
-  private def entriesMountEl: dom.Element = document.getElementById("entries-mount")
-  private def usersMountEl: dom.Element = document.getElementById("users-mount")
+  private def contentMountEl: dom.Element = document.getElementById("content-mount")
   private def loginForm: html.Form = document.getElementById("login-form").asInstanceOf[html.Form]
   private def signupForm: html.Form = document.getElementById("signup-form").asInstanceOf[html.Form]
   private def googleDevForm: html.Form = document.getElementById("google-dev-form").asInstanceOf[html.Form]
@@ -220,7 +219,7 @@ object App {
   }
 
   private def homeAction(ctx: RouteContext[js.Any, RouterContext]): Unit = {
-    PageLoader.ensureLoaded("/pages/entries.html", entriesMountEl)(wireEntries()).foreach { _ =>
+    PageLoader.ensureLoaded("/pages/entries.html", contentMountEl)(wireEntries()).foreach { _ =>
       showAuthedSection("entries-section")
       inputIds.foreach(refreshHistory)
     }
@@ -231,7 +230,7 @@ object App {
       route("/")(homeAction),
       route("/home")(homeAction),
       route("/users") { _ =>
-        PageLoader.ensureLoaded("/pages/users.html", usersMountEl)(wireUsers()).foreach { _ =>
+        PageLoader.ensureLoaded("/pages/users.html", contentMountEl)(wireUsers()).foreach { _ =>
           if (!currentUser.exists(_.isAdmin)) showAuthedSection("not-admin-section")
           else {
             showAuthedSection("users-list-section")
@@ -240,7 +239,7 @@ object App {
         }
       },
       route("/users/new") { _ =>
-        PageLoader.ensureLoaded("/pages/users.html", usersMountEl)(wireUsers()).foreach { _ =>
+        PageLoader.ensureLoaded("/pages/users.html", contentMountEl)(wireUsers()).foreach { _ =>
           if (!currentUser.exists(_.isAdmin)) showAuthedSection("not-admin-section")
           else {
             resetCreateUserForm()
@@ -249,7 +248,7 @@ object App {
         }
       },
       route("/users/:id") { ctx =>
-        PageLoader.ensureLoaded("/pages/users.html", usersMountEl)(wireUsers()).foreach { _ =>
+        PageLoader.ensureLoaded("/pages/users.html", contentMountEl)(wireUsers()).foreach { _ =>
           if (!currentUser.exists(_.isAdmin)) showAuthedSection("not-admin-section")
           else {
             val id = ctx.params.asInstanceOf[js.Dictionary[String]]("id")
