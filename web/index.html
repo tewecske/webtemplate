@@ -13,18 +13,69 @@
 
 <body class="h-full bg-base-200 text-base-content antialiased">
   <main class="mx-auto max-w-4xl px-6 py-12">
-    <nav class="mb-8 flex items-center justify-between gap-4 text-sm">
-      <h1 class="text-2xl font-bold tracking-tight"><a href="#home">App Name</a></h1>
-      <div class="flex items-center gap-4 text-base-content/60">
-        <select id="theme-select" class="select select-bordered select-xs" aria-label="Theme">
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-          <option value="cupcake">Cupcake</option>
-          <option value="synthwave">Synthwave</option>
-          <option value="corporate">Corporate</option>
-        </select>
+    <div class="navbar bg-base-100 rounded-box mb-8 gap-2">
+      <div class="navbar-start">
+        <div class="dropdown">
+          <div tabindex="0" role="button" class="btn btn-ghost lg:hidden" aria-label="Open menu">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </div>
+          <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+            <li><a href="#home">Entries</a></li>
+            <li><a href="#/page2items">Page2</a></li>
+            <li><a href="#/users" id="nav-users-link-mobile" class="hidden">Users</a></li>
+          </ul>
+        </div>
+        <a href="#home" class="btn btn-ghost text-xl shrink truncate max-w-40">App Name</a>
       </div>
-    </nav>
+      <div class="navbar-center hidden lg:flex">
+        <ul class="menu menu-horizontal px-1">
+          <li><a href="#home">Entries</a></li>
+          <li><a href="#/page2items">Page2</a></li>
+          <li><a href="#/users" id="nav-users-link-desktop" class="hidden">Users</a></li>
+        </ul>
+      </div>
+      <div class="navbar-end">
+        <div class="dropdown">
+          <div tabindex="0" role="button" class="btn m-1">
+            Theme
+            <svg width="12px" height="12px" class="inline-block h-2 w-2 fill-current opacity-60"
+              xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 2048">
+              <path d="M1799 349l242 241-1017 1017L7 590l242-241 775 775 775-775z"></path>
+            </svg>
+          </div>
+          <ul tabindex="-1" class="dropdown-content bg-base-300 rounded-box z-1 w-52 p-2 shadow-2xl">
+            <li>
+              <input type="radio" name="theme-dropdown"
+                class="theme-controller w-full btn btn-sm btn-block btn-ghost justify-start" aria-label="Light"
+                value="light" />
+            </li>
+            <li>
+              <input type="radio" name="theme-dropdown"
+                class="theme-controller w-full btn btn-sm btn-block btn-ghost justify-start" aria-label="Dark"
+                value="dark" />
+            </li>
+            <li>
+              <input type="radio" name="theme-dropdown"
+                class="theme-controller w-full btn btn-sm btn-block btn-ghost justify-start" aria-label="Cupcake"
+                value="cupcake" />
+            </li>
+            <li>
+              <input type="radio" name="theme-dropdown"
+                class="theme-controller w-full btn btn-sm btn-block btn-ghost justify-start" aria-label="Synthwave"
+                value="synthwave" />
+            </li>
+            <li>
+              <input type="radio" name="theme-dropdown"
+                class="theme-controller w-full btn btn-sm btn-block btn-ghost justify-start" aria-label="Corporate"
+                value="corporate" />
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
 
     <div id="auth-mount" class="items-center justify-center"></div>
 

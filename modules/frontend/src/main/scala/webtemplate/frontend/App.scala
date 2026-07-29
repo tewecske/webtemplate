@@ -26,6 +26,8 @@ object App {
   // --- element refs ---
   private def authSection: dom.Element = document.getElementById("auth-section")
   private def userMenuEl: dom.Element = document.getElementById("user-menu")
+  private def navUsersLinks: List[dom.Element] =
+    List("nav-users-link-mobile", "nav-users-link-desktop").flatMap(id => Option(document.getElementById(id)))
   private def authMountEl: dom.Element = document.getElementById("auth-mount")
   private def contentMountEl: dom.Element = document.getElementById("content-mount")
   private def loginForm: html.Form = document.getElementById("login-form").asInstanceOf[html.Form]
@@ -48,7 +50,11 @@ object App {
     h
   }
 
+  private def updateNavAdminVisibility(): Unit =
+    navUsersLinks.foreach(_.classList.toggle("hidden", !currentUser.exists(_.isAdmin)))
+
   private def showAuth(): Unit = {
+    updateNavAdminVisibility()
     authSection.classList.remove("hidden")
     userMenuEl.classList.add("hidden")
     contentSectionIds.foreach(id => Option(document.getElementById(id)).foreach(_.classList.add("hidden")))
@@ -364,6 +370,7 @@ object App {
   }
 
   private def afterAuthSuccess(): Unit = {
+    updateNavAdminVisibility()
     UserMenu.mount(
       userMenuEl,
       currentUser.get,
