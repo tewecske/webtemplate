@@ -219,14 +219,17 @@ object App {
     js.Dynamic.literal(path = path, action = fn).asInstanceOf[Route[js.Any, RouterContext]]
   }
 
+  private def homeAction(ctx: RouteContext[js.Any, RouterContext]): Unit = {
+    PageLoader.ensureLoaded("/pages/entries.html", entriesMountEl)(wireEntries()).foreach { _ =>
+      showAuthedSection("entries-section")
+      inputIds.foreach(refreshHistory)
+    }
+  }
+
   private val router = new UniversalRouterImpl[js.Any, RouterContext](
     js.Array(
-      route("/") { _ =>
-        PageLoader.ensureLoaded("/pages/entries.html", entriesMountEl)(wireEntries()).foreach { _ =>
-          showAuthedSection("entries-section")
-          inputIds.foreach(refreshHistory)
-        }
-      },
+      route("/")(homeAction),
+      route("/home")(homeAction),
       route("/users") { _ =>
         PageLoader.ensureLoaded("/pages/users.html", usersMountEl)(wireUsers()).foreach { _ =>
           if (!currentUser.exists(_.isAdmin)) showAuthedSection("not-admin-section")
@@ -258,7 +261,8 @@ object App {
   )
 
   private def resolveRoute(): Unit = {
-    val path = if (dom.window.location.hash.length > 1) dom.window.location.hash.substring(1) else "/"
+    val raw  = if (dom.window.location.hash.length > 1) dom.window.location.hash.substring(1) else "/"
+    val path = if (raw.startsWith("/")) raw else "/" + raw
     router
       .resolve(path)
       .asInstanceOf[js.Promise[js.Any]]
